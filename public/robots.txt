@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /sup-min
+Disallow: /admin
+Disallow: /api

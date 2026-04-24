@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { emailKudosReceived } from "@/lib/email";
+import { getChatConfig, postToChat } from "@/lib/chat-webhooks";
 
 const schema = z.object({
   receiverId: z.string().min(1),
@@ -53,8 +54,9 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  // Fire-and-forget kudos email
   const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+
+  // Fire-and-forget kudos email
   if (workspace?.emailOnKudos && !input.isPrivate) {
     emailKudosReceived({
       to: receiver.email,
@@ -64,6 +66,28 @@ export async function POST(req: Request) {
       points: input.points,
       workspaceName: workspace.name,
     }).catch(() => {});
+  }
+
+  // Fire-and-forget chat webhook (Slack/Teams/Discord/generic)
+  if (workspace && !input.isPrivate) {
+    const chat = await getChatConfig(workspace as any, "kudos");
+    if (chat) {
+      let badgeName: string | null = null;
+      let valueName: string | null = null;
+      if (input.badgeId) badgeName = (await prisma.badge.findUnique({ where: { id: input.badgeId } }))?.name || null;
+      if (input.valueId) valueName = (await prisma.companyValue.findUnique({ where: { id: input.valueId } }))?.name || null;
+      postToChat(chat.type, chat.url, {
+        kind: "kudos",
+        workspaceName: workspace.name,
+        senderName: user.name,
+        receiverName: receiver.name,
+        message: input.message,
+        points: input.points,
+        badge: badgeName,
+        value: valueName,
+        baseUrl: process.env.NEXTAUTH_URL || "https://cherishu.talkytools.com",
+      }).catch(() => {});
+    }
   }
 
   return NextResponse.json({ ok: true, id: recognition.id });

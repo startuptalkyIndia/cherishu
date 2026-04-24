@@ -38,6 +38,12 @@ export default async function SettingsPage() {
           emailOnNomination: workspace.emailOnNomination,
           emailOnWelcome: workspace.emailOnWelcome,
           emailWeeklyDigest: workspace.emailWeeklyDigest,
+          chatWebhookType: workspace.chatWebhookType,
+          chatWebhookUrl: workspace.chatWebhookUrl,
+          chatChannelLabel: workspace.chatChannelLabel,
+          chatOnKudos: workspace.chatOnKudos,
+          chatOnAutoKudos: workspace.chatOnAutoKudos,
+          chatOnNominationAwarded: workspace.chatOnNominationAwarded,
         }}
         values={values}
         badges={badges}

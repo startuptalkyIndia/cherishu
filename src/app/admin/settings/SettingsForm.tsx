@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Cake, PartyPopper, Mail } from "lucide-react";
+import { Loader2, Cake, PartyPopper, Mail, MessageSquare, Send } from "lucide-react";
 
 export default function SettingsForm({ workspace, values, badges }: { workspace: any; values: any[]; badges: any[] }) {
   const router = useRouter();
@@ -26,6 +26,15 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
     emailOnWelcome: workspace.emailOnWelcome,
     emailWeeklyDigest: workspace.emailWeeklyDigest,
   });
+  const [chat, setChat] = useState({
+    chatWebhookType: workspace.chatWebhookType || "slack",
+    chatWebhookUrl: workspace.chatWebhookUrl || "",
+    chatChannelLabel: workspace.chatChannelLabel || "",
+    chatOnKudos: workspace.chatOnKudos,
+    chatOnAutoKudos: workspace.chatOnAutoKudos,
+    chatOnNominationAwarded: workspace.chatOnNominationAwarded,
+  });
+  const [chatTestResult, setChatTestResult] = useState("");
   const [saved, setSaved] = useState("");
   const [loading, setLoading] = useState("");
 
@@ -54,6 +63,23 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
     setLoading(""); setSaved("e");
     setTimeout(() => setSaved(""), 2000);
     router.refresh();
+  }
+
+  async function saveChat(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading("c");
+    await fetch("/api/admin/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(chat) });
+    setLoading(""); setSaved("c");
+    setTimeout(() => setSaved(""), 2000);
+    router.refresh();
+  }
+
+  async function testChat() {
+    setLoading("tc"); setChatTestResult("");
+    const res = await fetch("/api/admin/chat-webhook/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: chat.chatWebhookType, url: chat.chatWebhookUrl }) });
+    const data = await res.json();
+    setLoading("");
+    setChatTestResult(res.ok ? (data.ok ? "Posted ✓ Check your chat channel" : `Failed: ${data.error || "unknown"}`) : `Error: ${data.error || "failed"}`);
   }
 
   async function testRun() {
@@ -180,6 +206,61 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
             {loading === "e" && <Loader2 className="w-4 h-4 animate-spin" />} Save email prefs
           </button>
         </div>
+      </form>
+
+      {/* Chat webhook */}
+      <form onSubmit={saveChat} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2"><MessageSquare className="w-5 h-5 text-indigo-600" /> Slack / Teams / Discord</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Post kudos and celebrations automatically to your chat tool. Paste an incoming webhook URL from your Slack, Teams, or Discord workspace.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Platform</label>
+            <select value={chat.chatWebhookType} onChange={(e) => setChat({ ...chat, chatWebhookType: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="slack">Slack</option>
+              <option value="teams">MS Teams</option>
+              <option value="discord">Discord</option>
+              <option value="generic">Generic webhook</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Webhook URL</label>
+            <input type="url" value={chat.chatWebhookUrl} onChange={(e) => setChat({ ...chat, chatWebhookUrl: e.target.value })} placeholder="https://hooks.slack.com/services/..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Channel label (display only)</label>
+          <input value={chat.chatChannelLabel} onChange={(e) => setChat({ ...chat, chatChannelLabel: e.target.value })} placeholder="#recognition" className="w-full sm:w-60 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+
+        <div className="space-y-1 pt-2 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-500 pt-2">Post which events?</p>
+          {[
+            { key: "chatOnKudos", label: "Peer kudos (recognitions)" },
+            { key: "chatOnAutoKudos", label: "Auto-kudos (birthdays + work anniversaries)" },
+            { key: "chatOnNominationAwarded", label: "Nomination awarded by HR" },
+          ].map((row) => (
+            <label key={row.key} className="flex items-center gap-3 text-sm text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input type="checkbox" checked={(chat as any)[row.key]} onChange={(e) => setChat({ ...chat, [row.key]: e.target.checked })} />
+              {row.label}
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-between items-center gap-3">
+          <button type="button" onClick={testChat} disabled={loading === "tc" || !chat.chatWebhookUrl} className="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2">
+            {loading === "tc" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send test
+          </button>
+          <div className="flex items-center gap-3">
+            {saved === "c" && <span className="text-sm text-green-700">Saved ✓</span>}
+            <button type="submit" disabled={loading === "c"} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+              {loading === "c" && <Loader2 className="w-4 h-4 animate-spin" />} Save chat integration
+            </button>
+          </div>
+        </div>
+        {chatTestResult && <div className={`text-sm px-3 py-2 rounded-lg ${chatTestResult.startsWith("Posted") ? "bg-green-100 text-green-800" : "bg-red-50 text-red-600"}`}>{chatTestResult}</div>}
       </form>
 
       {/* Values + Badges summary */}

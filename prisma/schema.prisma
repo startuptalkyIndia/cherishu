@@ -33,6 +33,13 @@ model Workspace {
   emailOnNomination       Boolean @default(true)
   emailOnWelcome          Boolean @default(true)
   emailWeeklyDigest       Boolean @default(true)
+  // Chat integrations (Slack / Teams / Discord / generic webhook)
+  chatWebhookType         String?  // "slack" | "teams" | "discord" | "generic"
+  chatWebhookUrl          String?
+  chatChannelLabel        String?
+  chatOnKudos             Boolean @default(true)
+  chatOnAutoKudos         Boolean @default(true)
+  chatOnNominationAwarded Boolean @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

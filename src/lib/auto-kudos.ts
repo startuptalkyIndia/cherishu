@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { getChatConfig, postToChat } from "./chat-webhooks";
 
 /**
  * Scans all workspaces for users with a birthday or work anniversary "today"
@@ -69,6 +70,18 @@ export async function runAutoKudos(now: Date = new Date()) {
                 }),
               ]);
               birthdayCount++;
+              // Post to chat if configured
+              const chat = await getChatConfig(ws as any, "autoKudos");
+              if (chat) {
+                postToChat(chat.type, chat.url, {
+                  kind: "birthday",
+                  workspaceName: ws.name,
+                  receiverName: user.name,
+                  message,
+                  points: ws.autoBirthdayPoints,
+                  baseUrl: process.env.NEXTAUTH_URL || "https://cherishu.talkytools.com",
+                }).catch(() => {});
+              }
             } catch (e: any) {
               errors.push(`birthday ${user.id}: ${e.message}`);
             }
@@ -116,6 +129,17 @@ export async function runAutoKudos(now: Date = new Date()) {
                 }),
               ]);
               anniversaryCount++;
+              const chat = await getChatConfig(ws as any, "autoKudos");
+              if (chat) {
+                postToChat(chat.type, chat.url, {
+                  kind: "anniversary",
+                  workspaceName: ws.name,
+                  receiverName: user.name,
+                  message,
+                  points: ws.autoAnniversaryPoints,
+                  baseUrl: process.env.NEXTAUTH_URL || "https://cherishu.talkytools.com",
+                }).catch(() => {});
+              }
             } catch (e: any) {
               errors.push(`anniversary ${user.id}: ${e.message}`);
             }

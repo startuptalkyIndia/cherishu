@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Multi-tenant: each Workspace = one company
+// ============================================================================
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  plan        String   @default("free") // free | pro | enterprise
+  monthlyBudgetPoints Int @default(10000)
+  pointsPerCurrencyUnit Int @default(1) // 1 point = ₹1 (configurable)
+  currency    String   @default("INR")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  recognitions Recognition[]
+  badges       Badge[]
+  rewards      Reward[]
+  redemptions  Redemption[]
+  values       CompanyValue[]
+  nominations  Nomination[]
+  providerConfigs RewardProviderConfig[]
+}
+
+// ============================================================================
+// Users & Auth
+// ============================================================================
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  HR_ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String?
+  avatarUrl     String?
+  role          Role      @default(EMPLOYEE)
+  jobTitle      String?
+  department    String?
+  managerId     String?
+  manager       User?     @relation("ManagerReports", fields: [managerId], references: [id])
+  reports       User[]    @relation("ManagerReports")
+
+  workspaceId   String?
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Two wallets: giveable (budget resets monthly) + redeemable (earned)
+  giveablePoints   Int @default(500)
+  redeemablePoints Int @default(0)
+
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastLoginAt  DateTime?
+
+  sentRecognitions     Recognition[] @relation("Sender")
+  receivedRecognitions Recognition[] @relation("Receiver")
+  redemptions          Redemption[]
+  nominationsGiven     Nomination[]  @relation("Nominator")
+  nominationsReceived  Nomination[]  @relation("Nominee")
+  reactions            Reaction[]
+
+  @@index([workspaceId])
+  @@index([email])
+}
+
+// ============================================================================
+// Recognition (peer-to-peer kudos)
+// ============================================================================
+
+model Recognition {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation("Sender", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("Receiver", fields: [receiverId], references: [id])
+  message     String   @db.Text
+  points      Int      @default(0)
+  badgeId     String?
+  badge       Badge?   @relation(fields: [badgeId], references: [id])
+  valueId     String?
+  value       CompanyValue? @relation(fields: [valueId], references: [id])
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  reactions Reaction[]
+  comments  Comment[]
+
+  @@index([workspaceId, createdAt])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Reaction {
+  id             String   @id @default(cuid())
+  recognitionId  String
+  recognition    Recognition @relation(fields: [recognitionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  emoji          String   // 🎉 👏 💯 ❤️ 🔥
+  createdAt      DateTime @default(now())
+
+  @@unique([recognitionId, userId, emoji])
+}
+
+model Comment {
+  id             String   @id @default(cuid())
+  recognitionId  String
+  recognition    Recognition @relation(fields: [recognitionId], references: [id], onDelete: Cascade)
+  userId         String
+  message        String   @db.Text
+  createdAt      DateTime @default(now())
+}
+
+// ============================================================================
+// Badges (custom per workspace: "Team Player", "Innovator", etc.)
+// ============================================================================
+
+model Badge {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  emoji       String   @default("🏆")
+  color       String   @default("indigo")
+  createdAt   DateTime @default(now())
+
+  recognitions Recognition[]
+
+  @@unique([workspaceId, name])
+}
+
+// ============================================================================
+// Company Values (tag recognitions with a core value)
+// ============================================================================
+
+model CompanyValue {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  emoji       String   @default("⭐")
+  createdAt   DateTime @default(now())
+
+  recognitions Recognition[]
+
+  @@unique([workspaceId, name])
+}
+
+// ============================================================================
+// Nominations (manager/HR driven awards: "Employee of the Month")
+// ============================================================================
+
+enum NominationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AWARDED
+}
+
+model Nomination {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nominatorId String
+  nominator   User     @relation("Nominator", fields: [nominatorId], references: [id])
+  nomineeId   String
+  nominee     User     @relation("Nominee", fields: [nomineeId], references: [id])
+  award       String   // "Employee of the Month", "Spot Award", etc.
+  reason      String   @db.Text
+  points      Int      @default(0)
+  status      NominationStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  decidedAt   DateTime?
+}
+
+// ============================================================================
+// Rewards (Catalog)
+// Type system supports: gift cards, experiences, merchandise, cashback,
+// charity donations, custom swag, vouchers. Provider abstraction lets us
+// plug in Xoxoday, Tremendous, Amazon, or manual fulfillment.
+// ============================================================================
+
+enum RewardType {
+  GIFT_CARD        // Amazon, Flipkart, Starbucks
+  EXPERIENCE       // Spa, dinner, concert
+  MERCHANDISE      // Physical products
+  CASHBACK         // Direct to bank/wallet
+  CHARITY          // Donation on behalf
+  CUSTOM_SWAG      // Company branded items
+  VOUCHER          // Generic voucher
+  SUBSCRIPTION     // Netflix, Spotify etc.
+  TRAVEL           // Flights, hotel
+}
+
+enum RewardProvider {
+  MANUAL           // Admin fulfills manually
+  XOXODAY
+  TREMENDOUS
+  AMAZON_INCENTIVES
+  GIFTBIT
+  CUSTOM_API
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  workspaceId String?  // null = platform-wide reward, else workspace-specific
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?  @db.Text
+  imageUrl    String?
+  type        RewardType
+  provider    RewardProvider @default(MANUAL)
+  providerSku String?  // external SKU/product ID for provider API
+
+  pointsCost  Int
+  currencyValue Float? // real-world value in workspace currency
+  currency    String   @default("INR")
+
+  country     String   @default("IN")
+  category    String?  // e.g. "Food & Dining", "Shopping"
+  isActive    Boolean  @default(true)
+  stock       Int?     // null = unlimited
+  featured    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  redemptions Redemption[]
+
+  @@index([workspaceId, isActive])
+  @@index([type])
+}
+
+// ============================================================================
+// Redemption (employee redeems a reward)
+// ============================================================================
+
+enum RedemptionStatus {
+  PENDING
+  APPROVED
+  FULFILLED
+  FAILED
+  CANCELLED
+}
+
+model Redemption {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  rewardId    String
+  reward      Reward   @relation(fields: [rewardId], references: [id])
+
+  pointsSpent Int
+  status      RedemptionStatus @default(PENDING)
+
+  // Fulfillment data (voucher code, tracking, etc.)
+  voucherCode    String?
+  redemptionUrl  String?
+  trackingNumber String?
+  providerRef    String?  // external order id
+  notes          String?  @db.Text
+
+  // Shipping (for merchandise)
+  shippingAddress Json?
+
+  createdAt   DateTime @default(now())
+  fulfilledAt DateTime?
+
+  @@index([workspaceId, createdAt])
+  @@index([userId])
+}
+
+// ============================================================================
+// Reward Provider Config (per workspace: API keys, enabled providers)
+// ============================================================================
+
+model RewardProviderConfig {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  provider    RewardProvider
+  apiKey      String?   // encrypted in prod
+  apiSecret   String?
+  accountId   String?
+  isEnabled   Boolean  @default(false)
+  config      Json?     // provider-specific extra config
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([workspaceId, provider])
+}
+
+// ============================================================================
+// Super admin: Platform-level
+// ============================================================================
+
+model PlatformAdmin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorType String   // user | platform_admin | system
+  workspaceId String?
+  action    String   // e.g. "recognition.created", "redemption.approved"
+  target    String?  // entity id
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([action])
+}

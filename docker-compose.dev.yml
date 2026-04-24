@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cherishu_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cherishu
+      POSTGRES_PASSWORD: cherishu_dev
+      POSTGRES_DB: cherishu
+    ports:
+      - "5447:5432"
+    volumes:
+      - cherishu_pg_data:/var/lib/postgresql/data
+
+volumes:
+  cherishu_pg_data:

@@ -2,9 +2,12 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import SendKudosForm from "./SendKudosForm";
 
-export default async function SendPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SendPage({ searchParams }: { searchParams: Promise<{ to?: string }> }) {
   const user = await requireUser();
   if (!user.workspaceId) return null;
+  const sp = await searchParams;
 
   const [people, badges, values] = await Promise.all([
     prisma.user.findMany({
@@ -25,6 +28,7 @@ export default async function SendPage() {
         badges={badges}
         values={values}
         giveablePoints={user.giveablePoints}
+        defaultReceiver={sp.to}
       />
     </div>
   );

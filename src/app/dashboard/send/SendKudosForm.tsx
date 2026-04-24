@@ -8,11 +8,11 @@ type Person = { id: string; name: string; email: string; jobTitle: string | null
 type Badge = { id: string; name: string; emoji: string };
 type Value = { id: string; name: string; emoji: string };
 
-export default function SendKudosForm({ people, badges, values, giveablePoints }: {
-  people: Person[]; badges: Badge[]; values: Value[]; giveablePoints: number;
+export default function SendKudosForm({ people, badges, values, giveablePoints, defaultReceiver }: {
+  people: Person[]; badges: Badge[]; values: Value[]; giveablePoints: number; defaultReceiver?: string;
 }) {
   const router = useRouter();
-  const [receiverId, setReceiverId] = useState("");
+  const [receiverId, setReceiverId] = useState(defaultReceiver || "");
   const [message, setMessage] = useState("");
   const [points, setPoints] = useState(50);
   const [badgeId, setBadgeId] = useState("");

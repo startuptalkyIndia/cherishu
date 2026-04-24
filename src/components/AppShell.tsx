@@ -10,17 +10,21 @@ type NavItem = { href: string; label: string; icon: any };
 const employeeNav: NavItem[] = [
   { href: "/dashboard", label: "Feed", icon: Home },
   { href: "/dashboard/send", label: "Send Kudos", icon: Send },
+  { href: "/dashboard/nominate", label: "Nominate", icon: Award },
   { href: "/dashboard/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/dashboard/rewards", label: "Rewards", icon: Gift },
   { href: "/dashboard/redemptions", label: "My Redemptions", icon: ClipboardList },
+  { href: "/dashboard/profile", label: "My Profile", icon: Users },
 ];
 
 const hrNav: NavItem[] = [
   { href: "/admin", label: "Overview", icon: Sparkles },
+  { href: "/admin/analytics", label: "Analytics", icon: Trophy },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/rewards", label: "Rewards Catalog", icon: Gift },
   { href: "/admin/redemptions", label: "Redemptions", icon: ClipboardList },
   { href: "/admin/nominations", label: "Nominations", icon: Award },
+  { href: "/admin/values", label: "Values & Badges", icon: Sparkles },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

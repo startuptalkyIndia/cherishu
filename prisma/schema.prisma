@@ -75,6 +75,7 @@ model User {
   nominationsGiven     Nomination[]  @relation("Nominator")
   nominationsReceived  Nomination[]  @relation("Nominee")
   reactions            Reaction[]
+  comments             Comment[]
 
   @@index([workspaceId])
   @@index([email])
@@ -126,6 +127,7 @@ model Comment {
   recognitionId  String
   recognition    Recognition @relation(fields: [recognitionId], references: [id], onDelete: Cascade)
   userId         String
+  user           User     @relation(fields: [userId], references: [id])
   message        String   @db.Text
   createdAt      DateTime @default(now())
 }

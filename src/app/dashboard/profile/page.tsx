@@ -58,7 +58,7 @@ export default async function ProfilePage() {
             <div className="p-6 text-center text-sm text-gray-500">No kudos yet — but your time will come.</div>
           ) : received.map((r) => (
             <div key={r.id} className="px-4 py-3 border-b border-gray-100 last:border-0">
-              <div className="text-sm"><span className="font-medium text-gray-900">{r.sender.name}</span>
+              <div className="text-sm"><span className="font-medium text-gray-900">{r.sender?.name || (r.kind === "birthday" ? "🎂 Birthday" : r.kind === "anniversary" ? "🎉 Anniversary" : "Cherishu")}</span>
                 {r.points > 0 && <span className="ml-2 text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium"><Coins className="w-3 h-3" /> +{r.points}</span>}
                 {r.badge && <span className="ml-1 text-xs">{r.badge.emoji}</span>}
               </div>

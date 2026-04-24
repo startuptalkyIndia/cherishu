@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Cake, PartyPopper } from "lucide-react";
 
 export default function SettingsForm({ workspace, values, badges }: { workspace: any; values: any[]; badges: any[] }) {
   const router = useRouter();
@@ -11,22 +11,48 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
     monthlyBudgetPoints: workspace.monthlyBudgetPoints,
     currency: workspace.currency,
   });
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [auto, setAuto] = useState({
+    autoBirthdayEnabled: workspace.autoBirthdayEnabled,
+    autoBirthdayPoints: workspace.autoBirthdayPoints,
+    autoBirthdayMessage: workspace.autoBirthdayMessage,
+    autoAnniversaryEnabled: workspace.autoAnniversaryEnabled,
+    autoAnniversaryPoints: workspace.autoAnniversaryPoints,
+    autoAnniversaryMessage: workspace.autoAnniversaryMessage,
+  });
+  const [saved, setSaved] = useState("");
+  const [loading, setLoading] = useState("");
 
-  async function save(e: React.FormEvent) {
+  async function saveWorkspace(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setLoading("w");
     await fetch("/api/admin/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    setLoading(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setLoading(""); setSaved("w");
+    setTimeout(() => setSaved(""), 2000);
+    router.refresh();
+  }
+
+  async function saveAuto(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading("a");
+    await fetch("/api/admin/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(auto) });
+    setLoading(""); setSaved("a");
+    setTimeout(() => setSaved(""), 2000);
+    router.refresh();
+  }
+
+  async function testRun() {
+    setLoading("t");
+    const res = await fetch("/api/admin/auto-kudos/test-run", { method: "POST" });
+    const data = await res.json();
+    setLoading("");
+    alert(`Test run complete: ${data.birthdayCount || 0} birthday + ${data.anniversaryCount || 0} anniversary kudos posted.`);
     router.refresh();
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={save} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      {/* Company basics */}
+      <form onSubmit={saveWorkspace} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Company</h2>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Company name</label>
@@ -47,13 +73,72 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
           </div>
         </div>
         <div className="flex justify-end items-center gap-3">
-          {saved && <span className="text-sm text-green-700">Saved ✓</span>}
-          <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />} Save changes
+          {saved === "w" && <span className="text-sm text-green-700">Saved ✓</span>}
+          <button type="submit" disabled={loading === "w"} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+            {loading === "w" && <Loader2 className="w-4 h-4 animate-spin" />} Save changes
           </button>
         </div>
       </form>
 
+      {/* Auto-kudos */}
+      <form onSubmit={saveAuto} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Automatic Kudos</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Cherishu automatically posts celebration kudos on birthdays and work anniversaries. Placeholders: <code className="bg-gray-100 px-1 rounded">{"{name}"}</code>, <code className="bg-gray-100 px-1 rounded">{"{years}"}</code>, <code className="bg-gray-100 px-1 rounded">{"{s}"}</code> (plural).</p>
+        </div>
+
+        {/* Birthday block */}
+        <div className="border border-pink-200 bg-pink-50 rounded-lg p-4">
+          <label className="flex items-center gap-2 font-medium text-gray-900">
+            <Cake className="w-5 h-5 text-pink-600" />
+            <input type="checkbox" checked={auto.autoBirthdayEnabled} onChange={(e) => setAuto({ ...auto, autoBirthdayEnabled: e.target.checked })} />
+            Auto-post birthday kudos
+          </label>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Award points</label>
+              <input type="number" min={0} value={auto.autoBirthdayPoints} onChange={(e) => setAuto({ ...auto, autoBirthdayPoints: parseInt(e.target.value || "0") })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" disabled={!auto.autoBirthdayEnabled} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Message template</label>
+              <textarea rows={2} value={auto.autoBirthdayMessage} onChange={(e) => setAuto({ ...auto, autoBirthdayMessage: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" disabled={!auto.autoBirthdayEnabled} />
+            </div>
+          </div>
+        </div>
+
+        {/* Anniversary block */}
+        <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+          <label className="flex items-center gap-2 font-medium text-gray-900">
+            <PartyPopper className="w-5 h-5 text-yellow-600" />
+            <input type="checkbox" checked={auto.autoAnniversaryEnabled} onChange={(e) => setAuto({ ...auto, autoAnniversaryEnabled: e.target.checked })} />
+            Auto-post work anniversary kudos
+          </label>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Award points</label>
+              <input type="number" min={0} value={auto.autoAnniversaryPoints} onChange={(e) => setAuto({ ...auto, autoAnniversaryPoints: parseInt(e.target.value || "0") })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" disabled={!auto.autoAnniversaryEnabled} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Message template</label>
+              <textarea rows={2} value={auto.autoAnniversaryMessage} onChange={(e) => setAuto({ ...auto, autoAnniversaryMessage: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" disabled={!auto.autoAnniversaryEnabled} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center gap-3">
+          <button type="button" onClick={testRun} disabled={loading === "t"} className="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2">
+            {loading === "t" && <Loader2 className="w-4 h-4 animate-spin" />} Run now (for today)
+          </button>
+          <div className="flex items-center gap-3">
+            {saved === "a" && <span className="text-sm text-green-700">Saved ✓</span>}
+            <button type="submit" disabled={loading === "a"} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+              {loading === "a" && <Loader2 className="w-4 h-4 animate-spin" />} Save auto-kudos
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {/* Values + Badges summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h3 className="font-semibold text-gray-900 mb-3">Company Values</h3>

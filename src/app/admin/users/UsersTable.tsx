@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, Loader2, Upload, Download, Zap } from "lucide-react";
 
-type U = { id: string; name: string; email: string; role: string; jobTitle: string | null; department: string | null; giveablePoints: number; redeemablePoints: number; isActive: boolean; createdAt: string };
+type U = { id: string; name: string; email: string; role: string; jobTitle: string | null; department: string | null; giveablePoints: number; redeemablePoints: number; isActive: boolean; birthday: string | null; joinedAt: string; createdAt: string };
 
 export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
   const router = useRouter();
@@ -12,7 +12,9 @@ export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
   const [open, setOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [topupOpen, setTopupOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "EMPLOYEE", jobTitle: "", department: "", giveablePoints: 500 });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "EMPLOYEE", jobTitle: "", department: "", giveablePoints: 500, birthday: "", joinedAt: new Date().toISOString().slice(0, 10) });
+  const [editingBday, setEditingBday] = useState<string | null>(null);
+  const [bdayDraft, setBdayDraft] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [csv, setCsv] = useState("");
@@ -28,7 +30,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
     if (!res.ok) return setErr(data.error || "Failed");
     setUsers([data.user, ...users]);
     setOpen(false);
-    setForm({ name: "", email: "", password: "", role: "EMPLOYEE", jobTitle: "", department: "", giveablePoints: 500 });
+    setForm({ name: "", email: "", password: "", role: "EMPLOYEE", jobTitle: "", department: "", giveablePoints: 500, birthday: "", joinedAt: new Date().toISOString().slice(0, 10) });
     router.refresh();
   }
 
@@ -83,6 +85,8 @@ export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
               <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Email</th>
               <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Role</th>
               <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Dept / Title</th>
+              <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">🎂 Birthday</th>
+              <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">🎉 Joined</th>
               <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Give / Earn</th>
               <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Status</th>
               <th className="px-3 py-3"></th>
@@ -99,6 +103,40 @@ export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
                   </span>
                 </td>
                 <td className="px-3 py-3 text-xs text-gray-600">{u.department || "—"} · {u.jobTitle || "—"}</td>
+                <td className="px-3 py-3 text-xs">
+                  {editingBday === `${u.id}-b` ? (
+                    <span className="flex items-center gap-1">
+                      <input type="date" defaultValue={u.birthday || ""} onChange={(e) => setBdayDraft(e.target.value)} className="border border-gray-300 rounded px-1 py-0.5 text-xs" autoFocus />
+                      <button onClick={async () => {
+                        await fetch(`/api/admin/users/${u.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ birthday: bdayDraft }) });
+                        setUsers(users.map(x => x.id === u.id ? { ...x, birthday: bdayDraft || null } : x));
+                        setEditingBday(null);
+                      }} className="text-green-700 hover:text-green-800">✓</button>
+                      <button onClick={() => setEditingBday(null)} className="text-gray-400">✕</button>
+                    </span>
+                  ) : (
+                    <button onClick={() => { setEditingBday(`${u.id}-b`); setBdayDraft(u.birthday || ""); }} className="text-gray-600 hover:text-indigo-600">
+                      {u.birthday ? u.birthday.slice(5) : "Set"}
+                    </button>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-xs">
+                  {editingBday === `${u.id}-j` ? (
+                    <span className="flex items-center gap-1">
+                      <input type="date" defaultValue={u.joinedAt} onChange={(e) => setBdayDraft(e.target.value)} className="border border-gray-300 rounded px-1 py-0.5 text-xs" autoFocus />
+                      <button onClick={async () => {
+                        await fetch(`/api/admin/users/${u.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ joinedAt: bdayDraft }) });
+                        setUsers(users.map(x => x.id === u.id ? { ...x, joinedAt: bdayDraft } : x));
+                        setEditingBday(null);
+                      }} className="text-green-700 hover:text-green-800">✓</button>
+                      <button onClick={() => setEditingBday(null)} className="text-gray-400">✕</button>
+                    </span>
+                  ) : (
+                    <button onClick={() => { setEditingBday(`${u.id}-j`); setBdayDraft(u.joinedAt); }} className="text-gray-600 hover:text-indigo-600">
+                      {u.joinedAt}
+                    </button>
+                  )}
+                </td>
                 <td className="px-3 py-3 text-sm text-gray-700">{u.giveablePoints} / {u.redeemablePoints}</td>
                 <td className="px-3 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
@@ -135,6 +173,10 @@ export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
               <F label="Department" value={form.department} onChange={(v) => setForm({ ...form, department: v })} />
             </div>
             <F label="Starting giveable pts" type="number" value={String(form.giveablePoints)} onChange={(v) => setForm({ ...form, giveablePoints: parseInt(v || "0") })} />
+            <div className="grid grid-cols-2 gap-3">
+              <F label="🎂 Birthday (optional)" type="date" value={form.birthday} onChange={(v) => setForm({ ...form, birthday: v })} />
+              <F label="🎉 Joined date" type="date" value={form.joinedAt} onChange={(v) => setForm({ ...form, joinedAt: v })} />
+            </div>
             {err && <div className="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg">{err}</div>}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setOpen(false)} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm border border-gray-300">Cancel</button>

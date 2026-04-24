@@ -63,7 +63,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
           ) : received.map((r) => (
             <div key={r.id} className="px-4 py-3 border-b border-gray-100 last:border-0">
               <div className="text-sm">
-                <span className="font-medium text-gray-900">{r.sender.name}</span>
+                <span className="font-medium text-gray-900">{r.sender?.name || (r.kind === "birthday" ? "🎂 Birthday" : r.kind === "anniversary" ? "🎉 Anniversary" : "Cherishu")}</span>
                 {r.points > 0 && <span className="ml-2 text-xs text-indigo-600 font-medium">+{r.points} pts</span>}
                 {r.badge && <span className="ml-1 text-xs">{r.badge.emoji} {r.badge.name}</span>}
               </div>

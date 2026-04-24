@@ -77,6 +77,8 @@ export default async function DashboardPage() {
                 badge: r.badge ? { emoji: r.badge.emoji, name: r.badge.name } : null,
                 value: r.value ? { emoji: r.value.emoji, name: r.value.name } : null,
                 createdAt: r.createdAt.toISOString(),
+                isSystem: r.isSystem,
+                kind: r.kind,
                 reactions: r.reactions.map(x => ({ emoji: x.emoji, userId: x.userId, userName: x.user.name })),
                 comments: r.comments.map(c => ({ id: c.id, userId: c.userId, userName: c.user.name, message: c.message, createdAt: c.createdAt.toISOString() })),
               }}

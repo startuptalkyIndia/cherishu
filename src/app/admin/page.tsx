@@ -66,12 +66,17 @@ export default async function AdminHome() {
         ) : (
           recentKudos.map((r) => (
             <div key={r.id} className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-medium">
-                {r.sender.name[0]?.toUpperCase()}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${r.isSystem ? (r.kind === "birthday" ? "bg-pink-100" : "bg-yellow-100") : "bg-indigo-100 text-indigo-600"}`}>
+                {r.isSystem ? (r.kind === "birthday" ? "🎂" : "🎉") : (r.sender?.name[0]?.toUpperCase() || "?")}
               </div>
               <div className="flex-1 min-w-0 text-sm">
-                <span className="font-medium text-gray-900">{r.sender.name}</span>
-                <span className="text-gray-500"> recognized </span>
+                {r.isSystem ? (
+                  <span className="font-medium text-gray-900">{r.kind === "birthday" ? "🎂 Birthday" : "🎉 Anniversary"}</span>
+                ) : (
+                  <><span className="font-medium text-gray-900">{r.sender?.name}</span>
+                  <span className="text-gray-500"> recognized </span></>
+                )}
+                <span className="text-gray-500">{r.isSystem ? " for " : ""}</span>
                 <span className="font-medium text-gray-900">{r.receiver.name}</span>
                 {r.points > 0 && <span className="text-indigo-600 font-medium"> · +{r.points} pts</span>}
                 <p className="text-gray-600 text-xs mt-0.5 line-clamp-1">{r.message}</p>

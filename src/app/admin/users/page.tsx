@@ -20,6 +20,8 @@ export default async function AdminUsersPage() {
       <UsersTable initialUsers={users.map((u) => ({
         id: u.id, name: u.name, email: u.email, role: u.role, jobTitle: u.jobTitle, department: u.department,
         giveablePoints: u.giveablePoints, redeemablePoints: u.redeemablePoints, isActive: u.isActive,
+        birthday: u.birthday?.toISOString().slice(0, 10) || null,
+        joinedAt: u.joinedAt.toISOString().slice(0, 10),
         createdAt: u.createdAt.toISOString(),
       }))} />
     </div>

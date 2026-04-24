@@ -33,9 +33,10 @@ export async function GET(req: Request) {
     });
     const csv = toCsv(rows.map(r => ({
       date: r.createdAt.toISOString(),
-      sender_name: r.sender.name, sender_email: r.sender.email,
+      sender_name: r.sender?.name || "(system)", sender_email: r.sender?.email || "",
       receiver_name: r.receiver.name, receiver_email: r.receiver.email,
       points: r.points, badge: r.badge?.name || "", value: r.value?.name || "",
+      is_system: r.isSystem ? "yes" : "no", kind: r.kind || "",
       message: r.message,
     })));
     return new NextResponse(csv, {

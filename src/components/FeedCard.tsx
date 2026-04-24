@@ -9,13 +9,15 @@ const EMOJIS = ["🎉", "👏", "💯", "❤️", "🔥", "🙌", "💜"];
 
 type R = {
   id: string;
-  sender: { id: string; name: string };
+  sender: { id: string; name: string } | null;
   receiver: { id: string; name: string };
   message: string;
   points: number;
   badge: { emoji: string; name: string } | null;
   value: { emoji: string; name: string } | null;
   createdAt: string;
+  isSystem?: boolean;
+  kind?: string | null;
   reactions: { emoji: string; userId: string; userName: string }[];
   comments: { id: string; userId: string; userName: string; message: string; createdAt: string }[];
 };
@@ -70,13 +72,28 @@ export default function FeedCard({ recognition: r, currentUserId }: { recognitio
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-start gap-3">
-        <Link href={`/dashboard/u/${r.sender.id}`} className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-medium shrink-0 hover:bg-indigo-200">
-          {r.sender.name[0]?.toUpperCase()}
-        </Link>
+        {r.isSystem ? (
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 ${r.kind === "birthday" ? "bg-pink-100" : "bg-yellow-100"}`}>
+            {r.kind === "birthday" ? "🎂" : "🎉"}
+          </div>
+        ) : (
+          <Link href={`/dashboard/u/${r.sender?.id}`} className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-medium shrink-0 hover:bg-indigo-200">
+            {r.sender?.name[0]?.toUpperCase()}
+          </Link>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap text-sm">
-            <Link href={`/dashboard/u/${r.sender.id}`} className="font-semibold text-gray-900 hover:text-indigo-600">{r.sender.name}</Link>
-            <span className="text-gray-500">recognized</span>
+            {r.isSystem ? (
+              <>
+                <span className="font-semibold text-gray-900">{r.kind === "birthday" ? "🎂 Birthday!" : "🎉 Work Anniversary!"}</span>
+                <span className="text-gray-500">for</span>
+              </>
+            ) : (
+              <>
+                <Link href={`/dashboard/u/${r.sender?.id}`} className="font-semibold text-gray-900 hover:text-indigo-600">{r.sender?.name}</Link>
+                <span className="text-gray-500">recognized</span>
+              </>
+            )}
             <Link href={`/dashboard/u/${r.receiver.id}`} className="font-semibold text-gray-900 hover:text-indigo-600">{r.receiver.name}</Link>
             {r.points > 0 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">

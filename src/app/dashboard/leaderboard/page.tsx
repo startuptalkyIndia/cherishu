@@ -19,16 +19,17 @@ export default async function LeaderboardPage() {
     take: 10,
   });
 
+  // Exclude system recognitions (null senderId) from top givers
   const topGivers = await prisma.recognition.groupBy({
     by: ["senderId"],
-    where: { workspaceId: user.workspaceId, createdAt: { gte: since } },
+    where: { workspaceId: user.workspaceId, createdAt: { gte: since }, senderId: { not: null } },
     _count: true,
     orderBy: { _count: { senderId: "desc" } },
     take: 10,
   });
 
   const userIds = [
-    ...new Set([...topReceivers.map((r) => r.receiverId), ...topGivers.map((g) => g.senderId)]),
+    ...new Set([...topReceivers.map((r) => r.receiverId), ...topGivers.map((g) => g.senderId).filter((v): v is string => !!v)]),
   ];
   const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, jobTitle: true } });
   const userMap = new Map(users.map((u) => [u.id, u]));
@@ -55,9 +56,9 @@ export default async function LeaderboardPage() {
         </Panel>
         <Panel title="Top Givers" icon={TrendingUp} tone="indigo" empty="No one has sent kudos yet">
           {topGivers.map((row, i) => {
-            const u = userMap.get(row.senderId);
+            const u = row.senderId ? userMap.get(row.senderId) : null;
             return (
-              <Row key={row.senderId} rank={i + 1} name={u?.name || "Unknown"} subtitle={u?.jobTitle || ""} metric={`${row._count} kudos`} sub={<><Coins className="w-3 h-3 inline" /> given</>} />
+              <Row key={row.senderId || `n${i}`} rank={i + 1} name={u?.name || "Unknown"} subtitle={u?.jobTitle || ""} metric={`${row._count} kudos`} sub={<><Coins className="w-3 h-3 inline" /> given</>} />
             );
           })}
         </Panel>

@@ -18,6 +18,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (body.role && ["EMPLOYEE", "MANAGER", "HR_ADMIN"].includes(body.role)) allowed.role = body.role;
   if (typeof body.jobTitle === "string") allowed.jobTitle = body.jobTitle;
   if (typeof body.department === "string") allowed.department = body.department;
+  if (typeof body.birthday === "string") allowed.birthday = body.birthday ? new Date(body.birthday) : null;
+  if (typeof body.joinedAt === "string") allowed.joinedAt = new Date(body.joinedAt);
 
   const updated = await prisma.user.update({ where: { id }, data: allowed });
   return NextResponse.json({ ok: true, user: updated });

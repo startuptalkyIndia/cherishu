@@ -2,6 +2,8 @@ import { requireRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import SettingsForm from "./SettingsForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const user = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
   if (!user.workspaceId) return null;
@@ -25,6 +27,12 @@ export default async function SettingsPage() {
           monthlyBudgetPoints: workspace.monthlyBudgetPoints,
           currency: workspace.currency,
           plan: workspace.plan,
+          autoBirthdayEnabled: workspace.autoBirthdayEnabled,
+          autoBirthdayPoints: workspace.autoBirthdayPoints,
+          autoBirthdayMessage: workspace.autoBirthdayMessage,
+          autoAnniversaryEnabled: workspace.autoAnniversaryEnabled,
+          autoAnniversaryPoints: workspace.autoAnniversaryPoints,
+          autoAnniversaryMessage: workspace.autoAnniversaryMessage,
         }}
         values={values}
         badges={badges}

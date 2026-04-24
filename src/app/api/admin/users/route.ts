@@ -12,6 +12,8 @@ const schema = z.object({
   jobTitle: z.string().optional(),
   department: z.string().optional(),
   giveablePoints: z.number().int().min(0).default(500),
+  birthday: z.string().optional(), // YYYY-MM-DD
+  joinedAt: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -37,6 +39,8 @@ export async function POST(req: Request) {
       department: input.department || null,
       giveablePoints: input.giveablePoints,
       workspaceId: admin.workspaceId,
+      birthday: input.birthday ? new Date(input.birthday) : null,
+      joinedAt: input.joinedAt ? new Date(input.joinedAt) : new Date(),
     },
   });
 

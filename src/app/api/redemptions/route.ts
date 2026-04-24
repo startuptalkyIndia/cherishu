@@ -5,14 +5,25 @@ import { requireUser } from "@/lib/session";
 import { getProvider } from "@/lib/reward-providers";
 import { emailRedemptionFulfilled } from "@/lib/email";
 
-const schema = z.object({ rewardId: z.string().min(1) });
+const schema = z.object({
+  rewardId: z.string().min(1),
+  shippingAddress: z.object({
+    name: z.string().optional(),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    postal: z.string().optional(),
+    country: z.string().optional(),
+    phone: z.string().optional(),
+  }).optional(),
+});
 
 export async function POST(req: Request) {
   const user = await requireUser();
   if (!user.workspaceId) return NextResponse.json({ error: "No workspace" }, { status: 400 });
 
   const body = await req.json();
-  const { rewardId } = schema.parse(body);
+  const { rewardId, shippingAddress } = schema.parse(body);
 
   const reward = await prisma.reward.findFirst({
     where: {
@@ -20,6 +31,7 @@ export async function POST(req: Request) {
       isActive: true,
       OR: [{ workspaceId: user.workspaceId }, { workspaceId: null }],
     },
+    include: { merchant: true },
   });
   if (!reward) return NextResponse.json({ error: "Reward not found or unavailable" }, { status: 404 });
   if (user.redeemablePoints < reward.pointsCost) {
@@ -34,13 +46,21 @@ export async function POST(req: Request) {
     where: { workspaceId_provider: { workspaceId: user.workspaceId, provider: reward.provider } },
   });
 
+  // Compute commission for marketplace rewards
+  const commission = (reward.provider === "MARKETPLACE" && reward.merchant && reward.currencyValue)
+    ? +(reward.currencyValue * reward.merchant.commissionPercent / 100).toFixed(2)
+    : 0;
+
   // Create redemption row first (PENDING)
   const redemption = await prisma.redemption.create({
     data: {
       workspaceId: user.workspaceId,
       userId: user.id,
       rewardId: reward.id,
+      merchantId: reward.merchantId || null,
       pointsSpent: reward.pointsCost,
+      commissionEarned: commission,
+      shippingAddress: shippingAddress as any,
       status: "PENDING",
     },
   });
@@ -64,6 +84,8 @@ export async function POST(req: Request) {
       providerSku: reward.providerSku,
       currencyValue: reward.currencyValue,
       currency: reward.currency,
+      shippingAddress: shippingAddress as any,
+      merchantId: reward.merchantId,
     },
     providerConfig
       ? {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Coins, Loader2, Star, X } from "lucide-react";
+import { Coins, Loader2, Star, X, MapPin } from "lucide-react";
 import { REWARD_TYPE_META } from "@/lib/reward-providers";
 
 type Reward = {
@@ -11,6 +11,7 @@ type Reward = {
   description: string | null;
   imageUrl: string | null;
   type: string;
+  provider: string;
   pointsCost: number;
   currencyValue: number | null;
   currency: string;
@@ -18,29 +19,50 @@ type Reward = {
   featured: boolean;
 };
 
+type Address = { name: string; street: string; city: string; state: string; postal: string; country: string; phone: string };
+
 export default function RewardsGrid({ rewards, redeemable }: { rewards: Reward[]; redeemable: number }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Reward | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [addr, setAddr] = useState<Address>({ name: "", street: "", city: "", state: "", postal: "", country: "India", phone: "" });
+
+  const needsAddress = selected?.provider === "MARKETPLACE" || selected?.type === "MERCHANDISE" || selected?.type === "CUSTOM_SWAG";
 
   async function redeem() {
     if (!selected) return;
     setLoading(true);
     setError("");
+    const body: any = { rewardId: selected.id };
+    if (needsAddress) {
+      // validate
+      if (!addr.name || !addr.street || !addr.city || !addr.postal) {
+        setLoading(false);
+        return setError("Please fill name, street, city and postal code.");
+      }
+      body.shippingAddress = addr;
+    }
     const res = await fetch("/api/redemptions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rewardId: selected.id }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error || "Redemption failed");
-    setSuccess(data.voucherCode ? `Redeemed! Voucher: ${data.voucherCode}` : "Redemption submitted! Check My Redemptions for updates.");
+    setSuccess(
+      data.voucherCode
+        ? `Redeemed! Voucher: ${data.voucherCode}`
+        : data.status === "PENDING"
+          ? "Order placed! Check My Redemptions for updates."
+          : "Redemption submitted! Check My Redemptions for updates."
+    );
     setTimeout(() => {
       setSelected(null);
       setSuccess("");
+      setAddr({ name: "", street: "", city: "", state: "", postal: "", country: "India", phone: "" });
       router.refresh();
     }, 2500);
   }
@@ -95,7 +117,7 @@ export default function RewardsGrid({ rewards, redeemable }: { rewards: Reward[]
 
       {selected && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
             <button onClick={() => !loading && setSelected(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
               <X className="w-5 h-5" />
             </button>
@@ -120,6 +142,28 @@ export default function RewardsGrid({ rewards, redeemable }: { rewards: Reward[]
               )}
             </div>
 
+            {needsAddress && (
+              <div className="mt-4 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <h4 className="font-medium text-gray-900 text-sm">Shipping details</h4>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">This will be sent to the merchant to fulfill your order.</p>
+                <div className="space-y-2">
+                  <A label="Recipient name" value={addr.name} onChange={(v) => setAddr({ ...addr, name: v })} />
+                  <A label="Street address" value={addr.street} onChange={(v) => setAddr({ ...addr, street: v })} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <A label="City" value={addr.city} onChange={(v) => setAddr({ ...addr, city: v })} />
+                    <A label="State" value={addr.state} onChange={(v) => setAddr({ ...addr, state: v })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <A label="Postal code" value={addr.postal} onChange={(v) => setAddr({ ...addr, postal: v })} />
+                    <A label="Phone" value={addr.phone} onChange={(v) => setAddr({ ...addr, phone: v })} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {error && <div className="mt-3 bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg">{error}</div>}
             {success && <div className="mt-3 bg-green-100 text-green-800 text-sm px-3 py-2 rounded-lg">{success}</div>}
 
@@ -140,5 +184,14 @@ export default function RewardsGrid({ rewards, redeemable }: { rewards: Reward[]
         </div>
       )}
     </>
+  );
+}
+
+function A({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+      <input value={value} onChange={(e) => onChange(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    </div>
   );
 }

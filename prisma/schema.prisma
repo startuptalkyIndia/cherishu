@@ -242,6 +242,7 @@ enum RewardType {
 
 enum RewardProvider {
   MANUAL           // Admin fulfills manually
+  MARKETPLACE      // Merchant fulfills directly; we collect a listing fee
   XOXODAY
   TREMENDOUS
   AMAZON_INCENTIVES
@@ -249,10 +250,33 @@ enum RewardProvider {
   CUSTOM_API
 }
 
+// A partner merchant (FNP, Interflora, etc.) whose products we list.
+// We don't own inventory — they fulfill, we collect a commission.
+model Merchant {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  logoUrl          String?
+  contactEmail     String
+  contactPhone     String?
+  commissionPercent Float   @default(10)
+  handoffMethod    String   @default("email") // "email" | "webhook" | "manual"
+  webhookUrl       String?
+  notes            String?  @db.Text
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  rewards          Reward[]
+  redemptions      Redemption[]
+}
+
 model Reward {
   id          String   @id @default(cuid())
   workspaceId String?  // null = platform-wide reward, else workspace-specific
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  merchantId  String?  // non-null when provider = MARKETPLACE
+  merchant    Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
 
   name        String
   description String?  @db.Text
@@ -300,8 +324,11 @@ model Redemption {
   user        User     @relation(fields: [userId], references: [id])
   rewardId    String
   reward      Reward   @relation(fields: [rewardId], references: [id])
+  merchantId  String?  // snapshot for marketplace orders
+  merchant    Merchant? @relation(fields: [merchantId], references: [id])
 
-  pointsSpent Int
+  pointsSpent     Int
+  commissionEarned Float @default(0) // snapshot of commission at order time
   status      RedemptionStatus @default(PENDING)
 
   // Fulfillment data (voucher code, tracking, etc.)

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, X, Loader2 } from "lucide-react";
+import FilterBar from "@/components/FilterBar";
 
 type M = {
   id: string; name: string; slug: string; contactEmail: string;
@@ -11,7 +12,7 @@ type M = {
   rewardCount: number; redemptionCount: number; earnings: number;
 };
 
-export default function MerchantsList({ initial }: { initial: M[] }) {
+export default function MerchantsList({ initial, total, pageSize }: { initial: M[]; total: number; pageSize: number }) {
   const router = useRouter();
   const [merchants, setMerchants] = useState(initial);
   const [open, setOpen] = useState(false);
@@ -41,11 +42,28 @@ export default function MerchantsList({ initial }: { initial: M[] }) {
 
   return (
     <>
-      <div className="flex justify-end mb-3">
-        <button onClick={() => setOpen(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Add merchant
+      <FilterBar
+        searchPlaceholder="Search by name, slug or email…"
+        filters={[
+          { key: "status", label: "Status", options: [
+            { label: "All", value: "" },
+            { label: "Active", value: "active" },
+            { label: "Inactive", value: "inactive" },
+          ]},
+          { key: "handoff", label: "Handoff", options: [
+            { label: "All", value: "" },
+            { label: "Email", value: "email" },
+            { label: "Webhook", value: "webhook" },
+            { label: "Manual", value: "manual" },
+          ]},
+        ]}
+        total={total}
+        pageSize={pageSize}
+      >
+        <button onClick={() => setOpen(true)} className="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-indigo-700 flex items-center gap-1.5">
+          <Plus className="w-3.5 h-3.5" /> Add merchant
         </button>
-      </div>
+      </FilterBar>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-left">

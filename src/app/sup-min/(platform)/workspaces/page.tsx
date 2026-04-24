@@ -1,25 +1,76 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import CreateWorkspaceButton from "./CreateWorkspaceButton";
+import FilterBar from "@/components/FilterBar";
 
 export const dynamic = "force-dynamic";
 
-export default async function WorkspacesPage() {
-  const workspaces = await prisma.workspace.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { users: true, recognitions: true, redemptions: true } } },
-  });
+export default async function WorkspacesPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page || "1"));
+  const pageSize = 30;
+  const q = (sp.q || "").trim();
+  const plan = sp.plan || "";
+  const sort = sp.sort || "createdAt-desc";
+
+  const where: any = {};
+  if (plan) where.plan = plan;
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { slug: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  const orderByMap: Record<string, any> = {
+    "createdAt-desc": { createdAt: "desc" },
+    "createdAt-asc": { createdAt: "asc" },
+    "name-asc": { name: "asc" },
+    "users-desc": { users: { _count: "desc" } },
+    "kudos-desc": { recognitions: { _count: "desc" } },
+  };
+  const orderBy = orderByMap[sort] || orderByMap["createdAt-desc"];
+
+  const [workspaces, total] = await Promise.all([
+    prisma.workspace.findMany({
+      where, orderBy,
+      skip: (page - 1) * pageSize, take: pageSize,
+      include: { _count: { select: { users: true, recognitions: true, redemptions: true } } },
+    }),
+    prisma.workspace.count({ where }),
+  ]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Workspaces</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{workspaces.length} total.</p>
+          <p className="text-sm text-gray-500 mt-0.5">{total} total across the platform.</p>
         </div>
-        <CreateWorkspaceButton />
       </div>
+
+      <FilterBar
+        searchPlaceholder="Search by name or slug…"
+        filters={[
+          { key: "plan", label: "Plan", options: [
+            { label: "All", value: "" },
+            { label: "Free", value: "free" },
+            { label: "Pro", value: "pro" },
+            { label: "Enterprise", value: "enterprise" },
+          ]},
+        ]}
+        sort={{ key: "sort", label: "Sort", options: [
+          { label: "Newest", value: "createdAt-desc" },
+          { label: "Oldest", value: "createdAt-asc" },
+          { label: "Name A→Z", value: "name-asc" },
+          { label: "Most users", value: "users-desc" },
+          { label: "Most kudos", value: "kudos-desc" },
+        ]}}
+        total={total}
+        pageSize={pageSize}
+      >
+        <CreateWorkspaceButton />
+      </FilterBar>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
@@ -53,7 +104,11 @@ export default async function WorkspacesPage() {
               </tr>
             ))}
             {workspaces.length === 0 && (
-              <tr><td colSpan={9} className="px-3 py-10 text-center text-sm text-gray-500">No workspaces yet.</td></tr>
+              <tr><td colSpan={9} className="px-3 py-12 text-center text-sm text-gray-500">
+                {q || plan
+                  ? <>No workspaces match. <a href="/sup-min/workspaces" className="text-indigo-600 hover:text-indigo-800 font-medium">Clear filters</a></>
+                  : "No workspaces yet."}
+              </td></tr>
             )}
           </tbody>
         </table>

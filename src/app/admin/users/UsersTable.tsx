@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, Loader2, Upload, Download, Zap } from "lucide-react";
+import FilterBar from "@/components/FilterBar";
 
 type U = { id: string; name: string; email: string; role: string; jobTitle: string | null; department: string | null; giveablePoints: number; redeemablePoints: number; isActive: boolean; birthday: string | null; joinedAt: string; createdAt: string };
 
-export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
+export default function UsersTable({ initialUsers, total, pageSize, departments }: { initialUsers: U[]; total: number; pageSize: number; departments: { label: string; value: string }[] }) {
   const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
   const [open, setOpen] = useState(false);
@@ -62,20 +63,45 @@ export default function UsersTable({ initialUsers }: { initialUsers: U[] }) {
 
   return (
     <>
-      <div className="flex justify-end mb-3 gap-2 flex-wrap">
-        <button onClick={() => setTopupOpen(true)} className="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 flex items-center gap-2">
-          <Zap className="w-4 h-4" /> Bulk top-up
+      <FilterBar
+        searchPlaceholder="Search by name, email, or title…"
+        filters={[
+          { key: "role", label: "Role", options: [
+            { label: "All", value: "" },
+            { label: "Employee", value: "EMPLOYEE" },
+            { label: "Manager", value: "MANAGER" },
+            { label: "HR Admin", value: "HR_ADMIN" },
+          ]},
+          { key: "department", label: "Dept", options: departments },
+          { key: "status", label: "Status", options: [
+            { label: "All", value: "" },
+            { label: "Active", value: "active" },
+            { label: "Disabled", value: "disabled" },
+          ]},
+        ]}
+        sort={{ key: "sort", label: "Sort", options: [
+          { label: "Newest first", value: "createdAt-desc" },
+          { label: "Oldest first", value: "createdAt-asc" },
+          { label: "Name A→Z", value: "name-asc" },
+          { label: "Most redeemable", value: "redeemable-desc" },
+          { label: "Most giveable", value: "giveable-desc" },
+        ]}}
+        total={total}
+        pageSize={pageSize}
+      >
+        <button onClick={() => setTopupOpen(true)} className="bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2 rounded-lg text-xs hover:bg-gray-200 flex items-center gap-1.5">
+          <Zap className="w-3.5 h-3.5" /> Top-up
         </button>
-        <button onClick={() => setImportOpen(true)} className="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 flex items-center gap-2">
-          <Upload className="w-4 h-4" /> Import CSV
+        <button onClick={() => setImportOpen(true)} className="bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2 rounded-lg text-xs hover:bg-gray-200 flex items-center gap-1.5">
+          <Upload className="w-3.5 h-3.5" /> Import
         </button>
-        <a href="/api/admin/export?type=users" className="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 flex items-center gap-2">
-          <Download className="w-4 h-4" /> Export
+        <a href="/api/admin/export?type=users" className="bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2 rounded-lg text-xs hover:bg-gray-200 flex items-center gap-1.5">
+          <Download className="w-3.5 h-3.5" /> Export
         </a>
-        <button onClick={() => setOpen(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Add user
+        <button onClick={() => setOpen(true)} className="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-indigo-700 flex items-center gap-1.5">
+          <Plus className="w-3.5 h-3.5" /> Add user
         </button>
-      </div>
+      </FilterBar>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-left">

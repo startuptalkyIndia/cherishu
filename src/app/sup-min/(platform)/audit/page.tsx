@@ -1,19 +1,54 @@
 import { prisma } from "@/lib/prisma";
 import { formatDistanceToNow } from "date-fns";
+import FilterBar from "@/components/FilterBar";
 
 export const dynamic = "force-dynamic";
 
-export default async function AuditLogPage() {
-  const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
+export default async function AuditLogPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page || "1"));
+  const pageSize = 50;
+  const q = (sp.q || "").trim();
+  const actorType = sp.actorType || "";
+
+  const where: any = {};
+  if (actorType) where.actorType = actorType;
+  if (q) {
+    where.OR = [
+      { action: { contains: q, mode: "insensitive" } },
+      { target: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  const [logs, total] = await Promise.all([
+    prisma.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
+    prisma.auditLog.count({ where }),
+  ]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
       <p className="text-sm text-gray-500 mt-0.5 mb-6">System events across the platform.</p>
 
-      {logs.length === 0 ? (
+      <FilterBar
+        searchPlaceholder="Search by action or target…"
+        filters={[
+          { key: "actorType", label: "Actor", options: [
+            { label: "All", value: "" },
+            { label: "User", value: "user" },
+            { label: "Platform admin", value: "platform_admin" },
+            { label: "System", value: "system" },
+          ]},
+        ]}
+        total={total}
+        pageSize={pageSize}
+      />
+
+      {total === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-sm text-gray-500">
-          No audit events yet. Events will appear as users interact with the system.
+          {q || actorType
+            ? <>No events match. <a href="/sup-min/audit" className="text-indigo-600 hover:text-indigo-800 font-medium">Clear filters</a></>
+            : "No audit events yet. Events will appear as users interact with the system."}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

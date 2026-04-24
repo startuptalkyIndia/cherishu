@@ -1,6 +1,8 @@
 import { requireRole } from "@/lib/session";
 import AppShell from "@/components/AppShell";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
   return (

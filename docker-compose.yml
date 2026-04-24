@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: cherishu-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cherishu
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cherishu_prod}
+      POSTGRES_DB: cherishu
+    volumes:
+      - cherishu_db:/var/lib/postgresql/data
+    networks:
+      - cherishu_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cherishu -d cherishu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: cherishu-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://cherishu:${POSTGRES_PASSWORD:-cherishu_prod}@db:5432/cherishu?schema=public
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: https://cherishu.talkytools.com
+      NODE_ENV: production
+    ports:
+      - "3045:3045"
+    networks:
+      - cherishu_net
+
+networks:
+  cherishu_net:
+
+volumes:
+  cherishu_db:

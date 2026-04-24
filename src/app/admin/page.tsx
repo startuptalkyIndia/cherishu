@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Users, Heart, Gift, Coins, TrendingUp } from "lucide-react";
+import GettingStarted from "@/components/GettingStarted";
 
 export default async function AdminHome() {
   const user = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
@@ -10,7 +11,10 @@ export default async function AdminHome() {
   since.setDate(1);
   since.setHours(0, 0, 0, 0);
 
-  const [users, recentKudos, monthlyKudos, redemptions, totalPointsGiven, budget] = await Promise.all([
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+
+  const [users, recentKudos, monthlyKudos, redemptions, totalPointsGiven, budget,
+         realUsersCount, rewardCount, kudosCount] = await Promise.all([
     prisma.user.count({ where: { workspaceId: user.workspaceId, isActive: true } }),
     prisma.recognition.findMany({
       where: { workspaceId: user.workspaceId },
@@ -25,14 +29,73 @@ export default async function AdminHome() {
       _sum: { points: true },
     }),
     prisma.workspace.findUnique({ where: { id: user.workspaceId }, select: { monthlyBudgetPoints: true } }),
+    // Checklist signals
+    prisma.user.count({ where: { workspaceId: user.workspaceId, email: { not: { contains: "@demo." } } } }),
+    prisma.reward.count({ where: { workspaceId: user.workspaceId } }),
+    prisma.recognition.count({ where: { workspaceId: user.workspaceId } }),
   ]);
 
   const pointsUsed = totalPointsGiven._sum.points || 0;
   const budgetPts = budget?.monthlyBudgetPoints || 0;
   const pct = budgetPts ? Math.min(100, Math.round((pointsUsed / budgetPts) * 100)) : 0;
 
+  // Getting started checklist
+  const checklistItems = [
+    {
+      key: "invite",
+      label: "Invite your team",
+      description: realUsersCount >= 3 ? `${realUsersCount} teammates on board` : "Add at least 3 teammates",
+      done: realUsersCount >= 3,
+      href: "/admin/users",
+    },
+    {
+      key: "values",
+      label: "Customize your values",
+      description: "Edit the 4 default values to match your culture",
+      done: (workspace?.updatedAt?.getTime() || 0) > (workspace?.createdAt?.getTime() || 0) + 60_000,
+      href: "/admin/values",
+    },
+    {
+      key: "rewards",
+      label: "Add a reward",
+      description: rewardCount > 0 ? `${rewardCount} rewards in catalog` : "Create your first workspace-specific reward",
+      done: rewardCount > 0,
+      href: "/admin/rewards",
+    },
+    {
+      key: "kudos",
+      label: "Send first kudos",
+      description: kudosCount > 0 ? `${kudosCount} kudos posted so far` : "Try sending a kudos — it takes 10 seconds",
+      done: kudosCount > 0,
+      href: "/dashboard/send",
+    },
+    {
+      key: "chat",
+      label: "Connect Slack or Teams",
+      description: "Post kudos to your team chat automatically",
+      done: !!workspace?.chatWebhookUrl,
+      href: "/admin/settings",
+    },
+    {
+      key: "demo",
+      label: "Populate with demo data",
+      description: "One-click: 6 teammates + 15 recent kudos to bring the feed alive",
+      done: false, // never "done" — but hides once any demo user is created
+      action: "demo" as const,
+    },
+  ];
+
+  // Hide demo step if demo users already exist
+  const demoAlreadyAdded = await prisma.user.count({ where: { workspaceId: user.workspaceId, email: { contains: "@demo." } } });
+  const filteredChecklist = demoAlreadyAdded > 0 ? checklistItems.filter(i => i.key !== "demo") : checklistItems;
+  const doneCount = filteredChecklist.filter(i => i.done).length;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
+      {!workspace?.onboardingDismissed && doneCount < filteredChecklist.length && (
+        <GettingStarted items={filteredChecklist} progress={{ done: doneCount, total: filteredChecklist.length }} />
+      )}
+
       <h1 className="text-2xl font-bold text-gray-900">Admin Overview</h1>
       <p className="text-sm text-gray-500 mt-0.5 mb-6">Your workspace at a glance.</p>
 

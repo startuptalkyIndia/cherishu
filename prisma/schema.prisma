@@ -40,6 +40,7 @@ model Workspace {
   chatOnKudos             Boolean @default(true)
   chatOnAutoKudos         Boolean @default(true)
   chatOnNominationAwarded Boolean @default(true)
+  onboardingDismissed     Boolean @default(false) // "Get Started" checklist dismissed
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

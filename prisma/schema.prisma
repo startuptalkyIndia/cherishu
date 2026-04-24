@@ -27,6 +27,12 @@ model Workspace {
   autoAnniversaryEnabled  Boolean @default(true)
   autoAnniversaryPoints   Int     @default(200)
   autoAnniversaryMessage  String  @default("Happy work anniversary, {name}! 🎉 {years} year{s} at the company — thank you for everything you bring to the team.")
+  // Email notification toggles (per workspace)
+  emailOnKudos            Boolean @default(true)
+  emailOnRedemption       Boolean @default(true)
+  emailOnNomination       Boolean @default(true)
+  emailOnWelcome          Boolean @default(true)
+  emailWeeklyDigest       Boolean @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -338,6 +344,13 @@ model PlatformAdmin {
   passwordHash String
   createdAt    DateTime @default(now())
   lastLoginAt  DateTime?
+}
+
+// Key-value platform-wide settings (Resend API key, from address, etc.)
+model PlatformSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {

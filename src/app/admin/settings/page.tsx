@@ -33,6 +33,11 @@ export default async function SettingsPage() {
           autoAnniversaryEnabled: workspace.autoAnniversaryEnabled,
           autoAnniversaryPoints: workspace.autoAnniversaryPoints,
           autoAnniversaryMessage: workspace.autoAnniversaryMessage,
+          emailOnKudos: workspace.emailOnKudos,
+          emailOnRedemption: workspace.emailOnRedemption,
+          emailOnNomination: workspace.emailOnNomination,
+          emailOnWelcome: workspace.emailOnWelcome,
+          emailWeeklyDigest: workspace.emailWeeklyDigest,
         }}
         values={values}
         badges={badges}

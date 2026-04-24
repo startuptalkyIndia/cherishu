@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Cake, PartyPopper } from "lucide-react";
+import { Loader2, Cake, PartyPopper, Mail } from "lucide-react";
 
 export default function SettingsForm({ workspace, values, badges }: { workspace: any; values: any[]; badges: any[] }) {
   const router = useRouter();
@@ -18,6 +18,13 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
     autoAnniversaryEnabled: workspace.autoAnniversaryEnabled,
     autoAnniversaryPoints: workspace.autoAnniversaryPoints,
     autoAnniversaryMessage: workspace.autoAnniversaryMessage,
+  });
+  const [emails, setEmails] = useState({
+    emailOnKudos: workspace.emailOnKudos,
+    emailOnRedemption: workspace.emailOnRedemption,
+    emailOnNomination: workspace.emailOnNomination,
+    emailOnWelcome: workspace.emailOnWelcome,
+    emailWeeklyDigest: workspace.emailWeeklyDigest,
   });
   const [saved, setSaved] = useState("");
   const [loading, setLoading] = useState("");
@@ -36,6 +43,15 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
     setLoading("a");
     await fetch("/api/admin/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(auto) });
     setLoading(""); setSaved("a");
+    setTimeout(() => setSaved(""), 2000);
+    router.refresh();
+  }
+
+  async function saveEmails(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading("e");
+    await fetch("/api/admin/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(emails) });
+    setLoading(""); setSaved("e");
     setTimeout(() => setSaved(""), 2000);
     router.refresh();
   }
@@ -135,6 +151,34 @@ export default function SettingsForm({ workspace, values, badges }: { workspace:
               {loading === "a" && <Loader2 className="w-4 h-4 animate-spin" />} Save auto-kudos
             </button>
           </div>
+        </div>
+      </form>
+
+      {/* Email notifications */}
+      <form onSubmit={saveEmails} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2"><Mail className="w-5 h-5 text-indigo-600" /> Email Notifications</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Toggle which emails Cherishu sends for this workspace. (Platform email provider is set by the super admin.)</p>
+        </div>
+        <div className="space-y-2">
+          {[
+            { key: "emailOnWelcome", label: "Welcome email when a user is added" },
+            { key: "emailOnKudos", label: "\"You received a kudos\" to recipient" },
+            { key: "emailOnRedemption", label: "Redemption fulfilled notification" },
+            { key: "emailOnNomination", label: "New nomination alert to HR admins" },
+            { key: "emailWeeklyDigest", label: "Weekly engagement digest to HR admins (Mondays)" },
+          ].map((row) => (
+            <label key={row.key} className="flex items-center gap-3 text-sm text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input type="checkbox" checked={(emails as any)[row.key]} onChange={(e) => setEmails({ ...emails, [row.key]: e.target.checked })} />
+              {row.label}
+            </label>
+          ))}
+        </div>
+        <div className="flex justify-end items-center gap-3">
+          {saved === "e" && <span className="text-sm text-green-700">Saved ✓</span>}
+          <button type="submit" disabled={loading === "e"} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+            {loading === "e" && <Loader2 className="w-4 h-4 animate-spin" />} Save email prefs
+          </button>
         </div>
       </form>
 

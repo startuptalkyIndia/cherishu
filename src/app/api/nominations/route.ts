@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { emailNominationPending } from "@/lib/email";
 
 const schema = z.object({
   nomineeId: z.string().min(1),
@@ -31,5 +32,23 @@ export async function POST(req: Request) {
       points: input.points,
     },
   });
+
+  // Email HR admins
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+  if (workspace?.emailOnNomination) {
+    const hrAdmins = await prisma.user.findMany({
+      where: { workspaceId: user.workspaceId, role: "HR_ADMIN", isActive: true },
+      select: { email: true },
+    });
+    if (hrAdmins.length > 0) {
+      emailNominationPending({
+        to: hrAdmins.map((a) => a.email),
+        nominatorName: user.name,
+        nomineeName: nominee.name,
+        award: input.award,
+      }).catch(() => {});
+    }
+  }
+
   return NextResponse.json({ ok: true, id: n.id });
 }

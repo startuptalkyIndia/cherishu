@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
+import { emailWelcome } from "@/lib/email";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -44,11 +45,19 @@ export async function POST(req: Request) {
     },
   });
 
+  // Send welcome email if enabled
+  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+  if (workspace?.emailOnWelcome) {
+    emailWelcome({ email: user.email, name: user.name, workspaceName: workspace.name, tempPassword: input.password }).catch(() => {});
+  }
+
   return NextResponse.json({
     ok: true,
     user: {
       id: user.id, name: user.name, email: user.email, role: user.role, jobTitle: user.jobTitle, department: user.department,
       giveablePoints: user.giveablePoints, redeemablePoints: user.redeemablePoints, isActive: user.isActive,
+      birthday: user.birthday?.toISOString().slice(0, 10) || null,
+      joinedAt: user.joinedAt.toISOString().slice(0, 10),
       createdAt: user.createdAt.toISOString(),
     },
   });

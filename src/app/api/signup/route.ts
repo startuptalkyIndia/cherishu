@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { emailWelcome } from "@/lib/email";
 
 const schema = z.object({
   companyName: z.string().min(2).max(80),
@@ -64,6 +65,9 @@ export async function POST(req: Request) {
         giveablePoints: 1000,
       },
     });
+
+    // Fire-and-forget welcome email
+    emailWelcome({ email: user.email, name: user.name, workspaceName: workspace.name }).catch(() => {});
 
     return NextResponse.json({ ok: true, userId: user.id, workspaceId: workspace.id });
   } catch (err: any) {

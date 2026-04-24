@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { getProvider } from "@/lib/reward-providers";
+import { emailRedemptionFulfilled } from "@/lib/email";
 
 const schema = z.object({ rewardId: z.string().min(1) });
 
@@ -102,6 +103,20 @@ export async function POST(req: Request) {
   // decrement stock if tracked
   if (reward.stock !== null) {
     await prisma.reward.update({ where: { id: reward.id }, data: { stock: { decrement: 1 } } });
+  }
+
+  // Send email if redemption was auto-fulfilled
+  if (updated.status === "FULFILLED") {
+    const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+    if (workspace?.emailOnRedemption) {
+      emailRedemptionFulfilled({
+        to: user.email,
+        name: user.name,
+        rewardName: reward.name,
+        voucherCode: updated.voucherCode,
+        redemptionUrl: updated.redemptionUrl,
+      }).catch(() => {});
+    }
   }
 
   return NextResponse.json({

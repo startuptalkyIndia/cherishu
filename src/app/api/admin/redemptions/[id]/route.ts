@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
+import { emailRedemptionFulfilled } from "@/lib/email";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
@@ -19,7 +20,17 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         voucherCode: body.voucherCode || redemption.voucherCode,
         fulfilledAt: new Date(),
       },
+      include: { user: true, reward: true, workspace: true },
     });
+    if (updated.workspace.emailOnRedemption) {
+      emailRedemptionFulfilled({
+        to: updated.user.email,
+        name: updated.user.name,
+        rewardName: updated.reward.name,
+        voucherCode: updated.voucherCode,
+        redemptionUrl: updated.redemptionUrl,
+      }).catch(() => {});
+    }
     return NextResponse.json({ ok: true, redemption: updated });
   }
 

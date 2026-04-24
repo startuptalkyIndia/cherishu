@@ -17,6 +17,11 @@ export async function PATCH(req: Request) {
   if (typeof body.autoAnniversaryEnabled === "boolean") data.autoAnniversaryEnabled = body.autoAnniversaryEnabled;
   if (typeof body.autoAnniversaryPoints === "number") data.autoAnniversaryPoints = body.autoAnniversaryPoints;
   if (typeof body.autoAnniversaryMessage === "string") data.autoAnniversaryMessage = body.autoAnniversaryMessage;
+  if (typeof body.emailOnKudos === "boolean") data.emailOnKudos = body.emailOnKudos;
+  if (typeof body.emailOnRedemption === "boolean") data.emailOnRedemption = body.emailOnRedemption;
+  if (typeof body.emailOnNomination === "boolean") data.emailOnNomination = body.emailOnNomination;
+  if (typeof body.emailOnWelcome === "boolean") data.emailOnWelcome = body.emailOnWelcome;
+  if (typeof body.emailWeeklyDigest === "boolean") data.emailWeeklyDigest = body.emailWeeklyDigest;
 
   const ws = await prisma.workspace.update({ where: { id: admin.workspaceId }, data });
   return NextResponse.json({ ok: true, workspace: ws });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Building2, Gift, UserCog, FileText, BarChart3, LogOut, Heart } from "lucide-react";
+import { Shield, LayoutDashboard, Building2, Gift, UserCog, FileText, BarChart3, LogOut, Settings } from "lucide-react";
 
 const nav = [
   { href: "/sup-min/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const nav = [
   { href: "/sup-min/admins", label: "Admins", icon: UserCog },
   { href: "/sup-min/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/sup-min/audit", label: "Audit Log", icon: FileText },
+  { href: "/sup-min/platform-settings", label: "Settings", icon: Settings },
 ];
 
 export default function SupMinShell({ children, adminEmail }: { children: React.ReactNode; adminEmail: string }) {

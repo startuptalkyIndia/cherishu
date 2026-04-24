@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { emailKudosReceived } from "@/lib/email";
 
 const schema = z.object({
   receiverId: z.string().min(1),
@@ -51,6 +52,19 @@ export async function POST(req: Request) {
       data: { redeemablePoints: { increment: input.points } },
     }),
   ]);
+
+  // Fire-and-forget kudos email
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+  if (workspace?.emailOnKudos && !input.isPrivate) {
+    emailKudosReceived({
+      to: receiver.email,
+      receiverName: receiver.name,
+      senderName: user.name,
+      message: input.message,
+      points: input.points,
+      workspaceName: workspace.name,
+    }).catch(() => {});
+  }
 
   return NextResponse.json({ ok: true, id: recognition.id });
 }

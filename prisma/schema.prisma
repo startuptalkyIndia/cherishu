@@ -442,6 +442,27 @@ model PaymentEvent {
   @@index([eventType])
 }
 
+// Public lead capture (demo request, contact form)
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  teamSize    String?  // "<10" | "10-50" | "50-200" | "200-1000" | "1000+"
+  message     String?  @db.Text
+  source      String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  status      String   @default("new")
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   actorId   String?

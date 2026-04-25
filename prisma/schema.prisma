@@ -17,6 +17,8 @@ model Workspace {
   slug        String   @unique
   logoUrl     String?
   plan        String   @default("free") // free | pro | enterprise
+  billingEmail        String?
+  seatLimit           Int?    // null = unlimited (pro/enterprise)
   monthlyBudgetPoints Int @default(10000)
   pointsPerCurrencyUnit Int @default(1) // 1 point = ₹1 (configurable)
   currency    String   @default("INR")
@@ -52,6 +54,7 @@ model Workspace {
   values       CompanyValue[]
   nominations  Nomination[]
   providerConfigs RewardProviderConfig[]
+  subscription    Subscription?
 }
 
 // ============================================================================
@@ -386,6 +389,57 @@ model PlatformSetting {
   key       String   @id
   value     String   @db.Text
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// Billing — Razorpay subscriptions per workspace
+// ============================================================================
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  workspaceId          String   @unique
+  workspace            Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  plan                 String
+  status               SubscriptionStatus @default(TRIAL)
+  seatsPurchased       Int       @default(10)
+  pricePerSeatMonthly  Float     @default(199)
+  currency             String    @default("INR")
+  razorpayPlanId       String?
+  razorpaySubscriptionId String? @unique
+  razorpayCustomerId   String?
+  trialEndsAt          DateTime?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  cancelledAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  events               PaymentEvent[]
+}
+
+model PaymentEvent {
+  id             String   @id @default(cuid())
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  workspaceId    String?
+  eventType      String
+  amount         Float?
+  currency       String   @default("INR")
+  rawPayload     Json?
+  createdAt      DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([eventType])
 }
 
 model AuditLog {

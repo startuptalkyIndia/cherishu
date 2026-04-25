@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Home, Send, Gift, Trophy, Users, Settings, LogOut, Sparkles, Award, ClipboardList } from "lucide-react";
+import { Heart, Home, Send, Gift, Trophy, Users, Settings, LogOut, Sparkles, Award, ClipboardList, Coins } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 type NavItem = { href: string; label: string; icon: any };
@@ -25,6 +25,7 @@ const hrNav: NavItem[] = [
   { href: "/admin/redemptions", label: "Redemptions", icon: ClipboardList },
   { href: "/admin/nominations", label: "Nominations", icon: Award },
   { href: "/admin/values", label: "Values & Badges", icon: Sparkles },
+  { href: "/admin/billing", label: "Billing", icon: Coins },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

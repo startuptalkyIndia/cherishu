@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Building2, Gift, UserCog, FileText, BarChart3, LogOut, Settings, Store } from "lucide-react";
+import { Shield, LayoutDashboard, Building2, Gift, UserCog, FileText, BarChart3, LogOut, Settings, Store, CreditCard } from "lucide-react";
 
 const nav = [
   { href: "/sup-min/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/sup-min/workspaces", label: "Workspaces", icon: Building2 },
   { href: "/sup-min/merchants", label: "Merchants", icon: Store },
   { href: "/sup-min/rewards", label: "Platform Rewards", icon: Gift },
+  { href: "/sup-min/billing", label: "Billing", icon: CreditCard },
   { href: "/sup-min/admins", label: "Admins", icon: UserCog },
   { href: "/sup-min/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/sup-min/audit", label: "Audit Log", icon: FileText },

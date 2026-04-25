@@ -29,6 +29,18 @@ export async function POST(req: Request) {
   const existing = await prisma.user.findUnique({ where: { email: input.email.toLowerCase() } });
   if (existing) return NextResponse.json({ error: "Email already exists" }, { status: 400 });
 
+  // Enforce seat limit for free plan
+  const workspaceCheck = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+  if (workspaceCheck?.plan === "free") {
+    const seatCount = await prisma.user.count({
+      where: { workspaceId: admin.workspaceId, isActive: true, email: { not: { contains: "@demo." } } },
+    });
+    const limit = workspaceCheck.seatLimit ?? 10;
+    if (seatCount >= limit) {
+      return NextResponse.json({ error: `Free plan limited to ${limit} users. Upgrade to Pro to add more.`, code: "SEAT_LIMIT_REACHED" }, { status: 402 });
+    }
+  }
+
   const passwordHash = await bcrypt.hash(input.password, 10);
   const user = await prisma.user.create({
     data: {

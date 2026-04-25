@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 
 type Person = { id: string; name: string; email: string; jobTitle: string | null };
 type Badge = { id: string; name: string; emoji: string };
 type Value = { id: string; name: string; emoji: string };
+
+const TEMPLATES = [
+  { label: "🙏 Thank you", text: "Huge thanks for [what they did] — it really made a difference. You're a star!" },
+  { label: "🚀 Above & beyond", text: "You went above and beyond on [project]. The way you [specific action] saved the day. Genuinely impressed." },
+  { label: "💡 Brilliant idea", text: "Your idea about [topic] was exactly what we needed. Smart, creative, and it actually works. 👏" },
+  { label: "🤝 Team player", text: "Stepped in when we needed it most. The team appreciates the support — couldn't have shipped without you." },
+  { label: "🏆 Customer hero", text: "The way you handled [customer/situation] turned a tough moment into a win. That's how we earn trust." },
+  { label: "📣 Owned it", text: "You took complete ownership of [thing] and drove it to the finish line. No drama, just results." },
+  { label: "🎯 Crushed the goal", text: "Hitting [milestone] is a big deal — and you made it look easy. Hat tip from the whole team." },
+  { label: "🌟 Mentor moment", text: "Thanks for taking the time to mentor [person/team]. Sharing what you know lifts everyone up." },
+];
 
 export default function SendKudosForm({ people, badges, values, giveablePoints, defaultReceiver }: {
   people: Person[]; badges: Badge[]; values: Value[]; giveablePoints: number; defaultReceiver?: string;
@@ -61,13 +72,29 @@ export default function SendKudosForm({ people, badges, values, giveablePoints, 
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Message</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-xs font-medium text-gray-500">Message</label>
+          <span className="text-xs text-gray-400 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Quick templates</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.label}
+              type="button"
+              onClick={() => setMessage(t.text)}
+              className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100"
+              title={t.text}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          placeholder="What did they do that was amazing?"
+          placeholder="What did they do that was amazing? Tap a template above to start."
         />
       </div>
 

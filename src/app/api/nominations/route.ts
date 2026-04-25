@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { emailNominationPending } from "@/lib/email";
+import { auditNomination } from "@/lib/audit";
 
 const schema = z.object({
   nomineeId: z.string().min(1),
@@ -49,6 +50,8 @@ export async function POST(req: Request) {
       }).catch(() => {});
     }
   }
+
+  auditNomination("submitted", { workspaceId: user.workspaceId, actorId: user.id, nominationId: n.id, metadata: { award: input.award, nomineeId: input.nomineeId } });
 
   return NextResponse.json({ ok: true, id: n.id });
 }

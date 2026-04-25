@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
+import { auditWorkspace } from "@/lib/audit";
 
 export async function PATCH(req: Request) {
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
@@ -35,5 +36,13 @@ export async function PATCH(req: Request) {
   if (typeof body.onboardingDismissed === "boolean") data.onboardingDismissed = body.onboardingDismissed;
 
   const ws = await prisma.workspace.update({ where: { id: admin.workspaceId }, data });
+
+  // Audit which group of settings was changed
+  const keys = Object.keys(data);
+  if (keys.some(k => k.startsWith("auto"))) auditWorkspace("auto_kudos_toggled", { workspaceId: admin.workspaceId, actorId: admin.id, metadata: data });
+  else if (keys.some(k => k.startsWith("email"))) auditWorkspace("email_settings_updated", { workspaceId: admin.workspaceId, actorId: admin.id, metadata: data });
+  else if (keys.some(k => k.startsWith("chat"))) auditWorkspace("chat_webhook_updated", { workspaceId: admin.workspaceId, actorId: admin.id, metadata: { type: data.chatWebhookType, hasUrl: !!data.chatWebhookUrl } });
+  else auditWorkspace("settings_updated", { workspaceId: admin.workspaceId, actorId: admin.id, metadata: data });
+
   return NextResponse.json({ ok: true, workspace: ws });
 }

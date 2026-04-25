@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
+import { auditUser } from "@/lib/audit";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
@@ -22,5 +23,20 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.joinedAt === "string") allowed.joinedAt = new Date(body.joinedAt);
 
   const updated = await prisma.user.update({ where: { id }, data: allowed });
+
+  // Audit each meaningful change
+  if (typeof allowed.isActive === "boolean") {
+    auditUser(allowed.isActive ? "enabled" : "disabled", { workspaceId: admin.workspaceId, actorId: admin.id, targetUserId: id });
+  }
+  if (allowed.role && allowed.role !== user.role) {
+    auditUser("role_changed", { workspaceId: admin.workspaceId, actorId: admin.id, targetUserId: id, metadata: { from: user.role, to: allowed.role } });
+  }
+  if (typeof allowed.giveablePoints === "number" || typeof allowed.redeemablePoints === "number") {
+    auditUser("points_adjusted", {
+      workspaceId: admin.workspaceId, actorId: admin.id, targetUserId: id,
+      metadata: { giveable: allowed.giveablePoints, redeemable: allowed.redeemablePoints },
+    });
+  }
+
   return NextResponse.json({ ok: true, user: updated });
 }

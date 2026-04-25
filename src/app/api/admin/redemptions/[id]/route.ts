@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { emailRedemptionFulfilled } from "@/lib/email";
+import { auditRedemption } from "@/lib/audit";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
@@ -31,6 +32,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         redemptionUrl: updated.redemptionUrl,
       }).catch(() => {});
     }
+    auditRedemption("fulfilled", { workspaceId: admin.workspaceId, actorId: admin.id, redemptionId: id, metadata: { reward: updated.reward.name, voucher: updated.voucherCode } });
     return NextResponse.json({ ok: true, redemption: updated });
   }
 
@@ -40,6 +42,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       prisma.user.update({ where: { id: redemption.userId }, data: { redeemablePoints: { increment: redemption.pointsSpent } } }),
       prisma.redemption.update({ where: { id }, data: { status: "CANCELLED" } }),
     ]);
+    auditRedemption("cancelled", { workspaceId: admin.workspaceId, actorId: admin.id, redemptionId: id, metadata: { refunded: redemption.pointsSpent } });
     return NextResponse.json({ ok: true });
   }
 

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { emailWelcome } from "@/lib/email";
+import { auditUser } from "@/lib/audit";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -62,6 +63,14 @@ export async function POST(req: Request) {
   if (workspace?.emailOnWelcome) {
     emailWelcome({ email: user.email, name: user.name, workspaceName: workspace.name, tempPassword: input.password }).catch(() => {});
   }
+
+  // Audit
+  auditUser("invited", {
+    workspaceId: admin.workspaceId,
+    actorId: admin.id,
+    targetUserId: user.id,
+    metadata: { name: user.name, email: user.email, role: user.role },
+  });
 
   return NextResponse.json({
     ok: true,

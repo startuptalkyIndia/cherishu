@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { planFor } from "@/lib/plans";
 import { getRazorpayConfig, isRazorpayConfigured, createCustomer, createSubscription, stubCheckoutUrl } from "@/lib/razorpay";
+import { auditWorkspace } from "@/lib/audit";
 
 export async function POST(req: Request) {
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
       where: { workspaceId: admin.workspaceId, status: { in: ["ACTIVE", "TRIAL", "PAST_DUE"] } },
       data: { cancelAtPeriodEnd: true },
     });
+    auditWorkspace("plan_changed", { workspaceId: admin.workspaceId, actorId: admin.id, metadata: { to: "free" } });
     return NextResponse.redirect(new URL("/admin/billing?downgraded=1", req.url), 303);
   }
 
@@ -48,6 +50,7 @@ export async function POST(req: Request) {
       },
     });
     await prisma.workspace.update({ where: { id: admin.workspaceId }, data: { plan: "pro", seatLimit: null } });
+    auditWorkspace("plan_changed", { workspaceId: admin.workspaceId, actorId: admin.id, metadata: { to: "pro", mode: "trial" } });
     return NextResponse.redirect(new URL(stubCheckoutUrl(admin.workspaceId, plan), req.url), 303);
   }
 

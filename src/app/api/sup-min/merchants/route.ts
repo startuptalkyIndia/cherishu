@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requirePlatformAdmin } from "@/lib/platform-auth";
+import { auditMerchant } from "@/lib/audit";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -17,7 +18,7 @@ function slugify(s: string) {
 }
 
 export async function POST(req: Request) {
-  await requirePlatformAdmin();
+  const admin = await requirePlatformAdmin();
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid" }, { status: 400 });
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
       webhookUrl: input.webhookUrl || null,
     },
   });
+  auditMerchant("created", { actorId: admin.id, merchantId: merchant.id, metadata: { name: merchant.name, commission: merchant.commissionPercent } });
+
   return NextResponse.json({
     ok: true,
     merchant: {

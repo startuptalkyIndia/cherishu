@@ -17,6 +17,10 @@ const employeeNav: NavItem[] = [
   { href: "/dashboard/profile", label: "My Profile", icon: Users },
 ];
 
+const managerExtras: NavItem[] = [
+  { href: "/dashboard/team", label: "My Team", icon: Users },
+];
+
 const hrNav: NavItem[] = [
   { href: "/admin", label: "Overview", icon: Sparkles },
   { href: "/admin/analytics", label: "Analytics", icon: Trophy },
@@ -26,6 +30,7 @@ const hrNav: NavItem[] = [
   { href: "/admin/nominations", label: "Nominations", icon: Award },
   { href: "/admin/values", label: "Values & Badges", icon: Sparkles },
   { href: "/admin/billing", label: "Billing", icon: Coins },
+  { href: "/admin/activity", label: "Activity Log", icon: ClipboardList },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -39,7 +44,8 @@ export default function AppShell({
   section?: "employee" | "admin";
 }) {
   const pathname = usePathname();
-  const nav = section === "admin" ? hrNav : employeeNav;
+  const isManager = user.role === "MANAGER" || user.role === "HR_ADMIN" || user.role === "SUPER_ADMIN";
+  const nav = section === "admin" ? hrNav : (isManager ? [...employeeNav.slice(0, 3), ...managerExtras, ...employeeNav.slice(3)] : employeeNav);
   const canSeeAdmin = user.role === "HR_ADMIN" || user.role === "SUPER_ADMIN";
 
   return (

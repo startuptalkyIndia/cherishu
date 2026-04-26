@@ -42,6 +42,25 @@ Pending: (none on this broadcast — F is this update itself.)
 - Add a real `public/og-image.png` (1200×630, brand-aligned) before submitting the site to Google Search Console.
 - Consider adding `app/blog/` programmatic SEO once content is ready (Master Hub broadcast 04 mentioned this as the bonus).
 
+## [2026-04-26] Master Hub Broadcast Done (8-step follow-up)
+
+- **Step 1** Pulled standardization commits: ✓ (Already up to date — earlier rebase pulled them)
+- **Step 2** Seed verified, 3 standard users in DB: ✓
+   - `PlatformAdmin`: `superadmin@cherishu.com` (verified via SQL)
+   - `User HR_ADMIN`: `admin@cherishu.com` (verified via SQL)
+   - `User EMPLOYEE`: `user@cherishu.com` (verified via SQL)
+   - Seed ran cleanly against production DB. Idempotent (uses `upsert`), safe to re-run.
+- **Step 3** Legal pages: ✓ `/privacy`, `/terms`, `/refund` shipped earlier in the day, footer linked.
+- **Step 4** SEO foundation: ✓ `app/robots.ts`, `app/sitemap.ts`, OG + Twitter Card metadata in `app/layout.tsx`, Schema.org JSON-LD (Organization + SoftwareApplication + WebSite) on every page.
+- **Step 5** Standard `package.json` scripts: ✓
+   - Added: `db:reset`, `db:migrate`
+   - Updated `db:seed` → `npx prisma db seed`, with `prisma.seed` → `tsx prisma/seed.ts` config so the standard CLI invocation works
+- **Step 6** `/api/health` endpoint: ✓ Returns `{status, timestamp, db, latencyMs, service, version}`. 200 if DB reachable (queries `SELECT 1`), 503 if not. Cache-Control: no-store. Used by Docker healthcheck + uptime monitors.
+- **Step 7** Pushed to main: ✓ (commits `9e3ff1b` + `634b5c4`)
+- **Step 8** This update.
+
+**NOT redeployed** per Master Hub instruction. The /api/health route + new package.json scripts will activate on the next coordinated deploy. The seed already ran on production so standard credentials are live in the DB right now.
+
 ## Earlier broadcasts (already absorbed)
 
 - 2026-04-24: Cherishu launched with full feature set (R&R core, marketplace, billing, manager console, audit log, public pages, lead capture). See `git log` for full history.

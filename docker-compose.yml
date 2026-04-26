@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: cherishu-db
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_USER: cherishu
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cherishu_prod}
@@ -24,7 +24,7 @@ services:
   app:
     build: .
     container_name: cherishu-app
-    restart: unless-stopped
+    restart: always
     depends_on:
       db:
         condition: service_healthy

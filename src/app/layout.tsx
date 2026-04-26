@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CookieConsent from "@/components/CookieConsent";
 
 const SITE_URL = "https://cherishu.talkytools.com";
 const TAGLINE = "Employee rewards & recognition that actually gets used";
@@ -114,7 +115,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA_ORG_JSONLD) }}
         />
       </head>
-      <body className="bg-gray-50 text-gray-900 antialiased">{children}</body>
+      <body className="bg-gray-50 text-gray-900 antialiased">
+        {children}
+        <CookieConsent />
+      </body>
     </html>
   );
 }

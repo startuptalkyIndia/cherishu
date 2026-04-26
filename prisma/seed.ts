@@ -1,24 +1,63 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+/**
+ * Cherishu seed — TalkyTools standard credentials.
+ * Reference: _shared/templates/seed.template.ts
+ *
+ * Cherishu has two parallel auth systems:
+ *   - PlatformAdmin (super admin at /sup-min)
+ *   - User with roles EMPLOYEE / MANAGER / HR_ADMIN / SUPER_ADMIN (workspace login)
+ *
+ * Standard cred mapping for Cherishu:
+ *   - Super Admin → PlatformAdmin: superadmin@cherishu.com / Shu_bham12!
+ *   - Admin       → User HR_ADMIN: admin@cherishu.com / Admin@2026!
+ *   - Demo User   → User EMPLOYEE: user@cherishu.com / User@2026!
+ *
+ * Seed is idempotent (uses upsert) and creates a demo workspace "Acme Inc."
+ * with sample colleagues, recognitions, and rewards so the demo experience
+ * is alive from minute one.
+ */
+
 import { PrismaClient, RewardType, RewardProvider } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const PROJECT_DOMAIN = "cherishu.com";
+
+const SUPER_ADMIN = {
+  email: `superadmin@${PROJECT_DOMAIN}`,
+  name: "Super Admin",
+  password: "Shu_bham12!",
+};
+
+const ADMIN = {
+  email: `admin@${PROJECT_DOMAIN}`,
+  name: "Admin",
+  password: "Admin@2026!",
+};
+
+const DEMO_USER = {
+  email: `user@${PROJECT_DOMAIN}`,
+  name: "Demo User",
+  password: "User@2026!",
+};
+
 async function main() {
-  console.log("🌱 Seeding Cherishu…");
+  console.log(`\n🌱 Seeding ${PROJECT_DOMAIN}…\n`);
 
-  // Platform super admin
-  const superAdminPass = await bcrypt.hash("Admin@Cherishu2026", 10);
+  // 1) Platform super admin → /sup-min login (PlatformAdmin table)
+  const superHash = await bcrypt.hash(SUPER_ADMIN.password, 10);
   await prisma.platformAdmin.upsert({
-    where: { email: "superadmin@cherishu.com" },
-    update: { passwordHash: superAdminPass },
-    create: { email: "superadmin@cherishu.com", name: "Cherishu Super Admin", passwordHash: superAdminPass },
+    where: { email: SUPER_ADMIN.email },
+    update: { passwordHash: superHash, name: SUPER_ADMIN.name },
+    create: { email: SUPER_ADMIN.email, name: SUPER_ADMIN.name, passwordHash: superHash },
   });
+  console.log(`✓ Super admin: ${SUPER_ADMIN.email}`);
 
-  // Demo workspace: Acme Inc.
-  const existing = await prisma.workspace.findUnique({ where: { slug: "acme" } });
-  let workspace = existing;
-  if (!existing) {
+  // 2) Demo workspace (idempotent)
+  const existingWs = await prisma.workspace.findUnique({ where: { slug: "acme" } });
+  let workspace = existingWs;
+  if (!existingWs) {
     workspace = await prisma.workspace.create({
       data: {
         name: "Acme Inc.",
@@ -44,43 +83,77 @@ async function main() {
     });
   }
 
-  const adminPass = await bcrypt.hash("Admin@123", 10);
-  const userPass = await bcrypt.hash("User@123", 10);
+  // 3) Standard workspace users (HR admin + demo user)
+  const adminHash = await bcrypt.hash(ADMIN.password, 10);
+  await prisma.user.upsert({
+    where: { email: ADMIN.email },
+    update: { passwordHash: adminHash, role: "HR_ADMIN", name: ADMIN.name },
+    create: {
+      email: ADMIN.email,
+      name: ADMIN.name,
+      passwordHash: adminHash,
+      role: "HR_ADMIN",
+      jobTitle: "People Ops",
+      department: "HR",
+      workspaceId: workspace!.id,
+      giveablePoints: 2000,
+      redeemablePoints: 500,
+    },
+  });
+  console.log(`✓ Admin: ${ADMIN.email}`);
 
-  const demoUsers = [
-    { email: "admin@cherishu.com", name: "Admin User", role: "HR_ADMIN" as const, jobTitle: "People Ops", giveable: 2000, redeem: 500 },
-    { email: "priya@acme.com", name: "Priya Sharma", role: "MANAGER" as const, jobTitle: "Engineering Manager", giveable: 1500, redeem: 800 },
-    { email: "raj@acme.com", name: "Raj Patel", role: "EMPLOYEE" as const, jobTitle: "Senior Engineer", giveable: 500, redeem: 1200 },
-    { email: "anita@acme.com", name: "Anita Desai", role: "EMPLOYEE" as const, jobTitle: "Product Designer", giveable: 500, redeem: 950 },
-    { email: "vikram@acme.com", name: "Vikram Singh", role: "EMPLOYEE" as const, jobTitle: "Data Analyst", giveable: 500, redeem: 300 },
-    { email: "sana@acme.com", name: "Sana Khan", role: "EMPLOYEE" as const, jobTitle: "Marketing Lead", giveable: 500, redeem: 600 },
+  const userHash = await bcrypt.hash(DEMO_USER.password, 10);
+  await prisma.user.upsert({
+    where: { email: DEMO_USER.email },
+    update: { passwordHash: userHash, role: "EMPLOYEE", name: DEMO_USER.name },
+    create: {
+      email: DEMO_USER.email,
+      name: DEMO_USER.name,
+      passwordHash: userHash,
+      role: "EMPLOYEE",
+      jobTitle: "Engineer",
+      department: "Engineering",
+      workspaceId: workspace!.id,
+      giveablePoints: 500,
+      redeemablePoints: 300,
+    },
+  });
+  console.log(`✓ Demo user: ${DEMO_USER.email}`);
+
+  // 4) Demo colleagues (so the feed feels alive)
+  const teammates = [
+    { email: `priya@${PROJECT_DOMAIN}`, name: "Priya Sharma", role: "MANAGER" as const, jobTitle: "Engineering Manager" },
+    { email: `raj@${PROJECT_DOMAIN}`, name: "Raj Patel", role: "EMPLOYEE" as const, jobTitle: "Senior Engineer" },
+    { email: `anita@${PROJECT_DOMAIN}`, name: "Anita Desai", role: "EMPLOYEE" as const, jobTitle: "Product Designer" },
+    { email: `vikram@${PROJECT_DOMAIN}`, name: "Vikram Singh", role: "EMPLOYEE" as const, jobTitle: "Data Analyst" },
+    { email: `sana@${PROJECT_DOMAIN}`, name: "Sana Khan", role: "MANAGER" as const, jobTitle: "Marketing Lead" },
   ];
 
-  const users = [];
-  for (const u of demoUsers) {
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
+  const teammatePassword = await bcrypt.hash(DEMO_USER.password, 10);
+  for (const t of teammates) {
+    await prisma.user.upsert({
+      where: { email: t.email },
       update: {},
       create: {
-        email: u.email,
-        name: u.name,
-        passwordHash: u.email === "admin@cherishu.com" ? adminPass : userPass,
-        role: u.role,
-        jobTitle: u.jobTitle,
+        email: t.email,
+        name: t.name,
+        passwordHash: teammatePassword,
+        role: t.role,
+        jobTitle: t.jobTitle,
         department: "Engineering",
         workspaceId: workspace!.id,
-        giveablePoints: u.giveable,
-        redeemablePoints: u.redeem,
+        giveablePoints: 500,
+        redeemablePoints: 800,
       },
     });
-    users.push(user);
   }
 
-  // Seed recognitions
+  // 5) Sample recognitions (only on first run)
   const existingCount = await prisma.recognition.count({ where: { workspaceId: workspace!.id } });
   if (existingCount < 5) {
     const badges = await prisma.badge.findMany({ where: { workspaceId: workspace!.id } });
     const values = await prisma.companyValue.findMany({ where: { workspaceId: workspace!.id } });
+    const allUsers = await prisma.user.findMany({ where: { workspaceId: workspace!.id } });
 
     const messages = [
       "Crushing it on the launch — thank you for stepping up!",
@@ -91,9 +164,9 @@ async function main() {
       "Stayed late to ship the release — we owe you one.",
     ];
 
-    for (let i = 0; i < 8; i++) {
-      const sender = users[i % users.length];
-      const receiver = users[(i + 1) % users.length];
+    for (let i = 0; i < 8 && allUsers.length >= 2; i++) {
+      const sender = allUsers[i % allUsers.length];
+      const receiver = allUsers[(i + 1) % allUsers.length];
       if (sender.id === receiver.id) continue;
       await prisma.recognition.create({
         data: {
@@ -102,15 +175,15 @@ async function main() {
           receiverId: receiver.id,
           message: messages[i % messages.length],
           points: [50, 100, 150, 200, 50][i % 5],
-          badgeId: badges[i % badges.length].id,
-          valueId: values[i % values.length].id,
+          badgeId: badges[i % badges.length]?.id ?? null,
+          valueId: values[i % values.length]?.id ?? null,
           createdAt: new Date(Date.now() - i * 3600_000),
         },
       });
     }
   }
 
-  // Seed platform-wide rewards catalog (workspaceId = null)
+  // 6) Platform-wide rewards (only on first run)
   const platformRewards = [
     { name: "Amazon India Gift Card", desc: "Shop anything on Amazon.in", type: "GIFT_CARD", provider: "AMAZON_INCENTIVES", pts: 500, val: 500, cat: "Shopping", featured: true },
     { name: "Flipkart Voucher", desc: "Use on Flipkart.com", type: "GIFT_CARD", provider: "XOXODAY", pts: 500, val: 500, cat: "Shopping" },
@@ -149,11 +222,13 @@ async function main() {
     }
   }
 
-  console.log("✅ Seed complete.");
-  console.log("\n🔑 Login credentials:");
-  console.log("   HR Admin:     admin@cherishu.com / Admin@123");
-  console.log("   Employee:     priya@acme.com / User@123");
-  console.log("   Super Admin:  superadmin@cherishu.com / Admin@Cherishu2026 (at /sup-min)");
+  console.log("\n✅ Seed complete.\n");
+  console.log("🔑 Standard credentials:");
+  console.log(`   Super Admin (PlatformAdmin)  ${SUPER_ADMIN.email} / ${SUPER_ADMIN.password}   → /sup-min`);
+  console.log(`   Admin (HR_ADMIN)             ${ADMIN.email} / ${ADMIN.password}   → /login`);
+  console.log(`   Demo User (EMPLOYEE)         ${DEMO_USER.email} / ${DEMO_USER.password}   → /login\n`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
+main()
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());

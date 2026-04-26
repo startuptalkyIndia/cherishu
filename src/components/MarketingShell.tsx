@@ -67,8 +67,12 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             </ul>
           </div>
         </div>
-        <div className="border-t border-gray-200 py-5 text-center text-xs text-gray-500">
-          © 2026 Cherishu. All rights reserved.
+        <div className="border-t border-gray-200 py-5 text-center text-xs text-gray-500 flex items-center justify-center gap-4 flex-wrap">
+          <span>© 2026 Cherishu. All rights reserved.</span>
+          <span className="text-gray-300">·</span>
+          <Link href="/privacy" className="hover:text-indigo-600">Privacy</Link>
+          <Link href="/terms" className="hover:text-indigo-600">Terms</Link>
+          <Link href="/refund" className="hover:text-indigo-600">Refund</Link>
         </div>
       </footer>
     </div>

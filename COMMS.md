@@ -61,6 +61,15 @@ Pending: (none on this broadcast — F is this update itself.)
 
 **NOT redeployed** per Master Hub instruction. The /api/health route + new package.json scripts will activate on the next coordinated deploy. The seed already ran on production so standard credentials are live in the DB right now.
 
+### Standard Footer (added later same day)
+
+- Copied `_shared/templates/components/Footer.tsx.template` → `src/components/Footer.tsx`
+- Replaced `{{PROJECT_NAME}}` → "Cherishu", `{{COMPANY}}` → "TalkyTools"
+- Imported in `MarketingShell.tsx` (replaces inline footer)
+- 4-column layout: Brand · Product · Legal · TalkyTools Family (cross-links to Optimo, BillForge, SeizeLead per template)
+- Build verified, no regressions
+- Commit `8dfde31`
+
 ## Earlier broadcasts (already absorbed)
 
 - 2026-04-24: Cherishu launched with full feature set (R&R core, marketplace, billing, manager console, audit log, public pages, lead capture). See `git log` for full history.

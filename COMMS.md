@@ -85,6 +85,27 @@ Pending: (none on this broadcast — F is this update itself.)
 
 **NOT redeployed** per Master Hub instruction. Server stays on previous build until coordinated deploy.
 
+## [2026-04-26] Master Hub Broadcast v3 Done
+
+- **Step 0** Stashed + pulled Master Hub commits: ✓ (only `CONTEXT.md` and `.github/workflows/` were untracked, both intentional)
+- **Step 1** Pull --rebase: ✓ (already up to date)
+- **Step 2** Privacy/Terms/Refund customized: ✓ (Cherishu-specific copy, India jurisdiction, real refund terms — done in v1)
+- **Step 3** /api/health verified: ✓ (returns 200 with DB ping; 503 on DB failure — done in v2)
+- **Step 4** Seed verified, 3 standard users in DB: ✓ (`superadmin@cherishu.com`, `admin@cherishu.com`, `user@cherishu.com` live in production)
+- **Step 5** Footer + EmptyState + CookieConsent imported: ✓ (done in v1+v2)
+- **Step 6** CI/Security workflows + Dependabot + PR template: ✓ **JUST UNBLOCKED** — token now has `workflow` scope, both `ci.yml` and `security-scan.yml` pushed in commit `225db2f`. CI + Security scan runs both kicked off automatically on this push.
+- **Step 7** SEO foundation (robots/sitemap/OG/Schema): ✓ (done in v1)
+- **Step 8** Standard package.json scripts: ✓ (done in v1)
+- **Step 9** CHANGELOG.md created: ✓ (done in v2)
+- **Step 10** Sentry: **N/A** (Cherishu not on Tier 1+2 list)
+- **Step 11** Security headers in next.config.ts: ✓ HSTS (2y, preload), X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy camera/mic/geo off, poweredByHeader: false, compress: true
+- **Step 12** Favicon updated: ✓ Copied `_shared/templates/favicon.svg` → `public/favicon.svg`, icons metadata updated in `app/layout.tsx`
+- **Step 13** Pushed to main: ✓ commits `c46c9e0` (workflows) + `225db2f` (security headers + favicon)
+- **Step 14** NOT redeployed per instruction
+- **Step 15** This update
+
+**Open** — Dependabot already raised 2 PRs on the new repo (one merged successfully). Will review and merge after coordinated deploy.
+
 ### Standard Footer (added earlier same day)
 
 - Copied `_shared/templates/components/Footer.tsx.template` → `src/components/Footer.tsx`

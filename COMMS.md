@@ -61,7 +61,31 @@ Pending: (none on this broadcast — F is this update itself.)
 
 **NOT redeployed** per Master Hub instruction. The /api/health route + new package.json scripts will activate on the next coordinated deploy. The seed already ran on production so standard credentials are live in the DB right now.
 
-### Standard Footer (added later same day)
+## [2026-04-26] Master Hub Broadcast v2 Done
+
+- **Step 0** Stashed local + pulled Master Hub commits: ✓ (no uncommitted work)
+- **Step 1** Pull --rebase: ✓ (already up to date)
+- **Step 2** Privacy/Terms/Refund customized for Cherishu: ✓ (done in v1, not generic)
+- **Step 2** `/api/health` verified: ✓ (returns DB-pinged 200, 503 on failure)
+- **Step 3** Seed verified, 3 standard users in DB: ✓ (`superadmin@cherishu.com`, `admin@cherishu.com`, `user@cherishu.com` — all live in production from earlier seed run)
+- **Step 4** Footer + EmptyState + CookieConsent imported: ✓
+   - Footer in `MarketingShell` (cross-links to Optimo/BillForge/SeizeLead)
+   - EmptyState in `src/components/` with Cherishu-specific usage examples ready to wire
+   - CookieConsent imported at root `app/layout.tsx` (GDPR + India DPDP)
+- **Step 5** SEO foundation (robots/sitemap/OG/Schema): ✓ (done in v1)
+- **Step 6** Standard scripts: ✓ (done in v1, including `prisma.seed` config)
+- **Step 7** CI/Dependabot/PR template added: **PARTIAL**
+   - PR template ✓ committed
+   - Dependabot config ✓ committed
+   - `ci.yml` + `security-scan.yml` written locally but **NOT pushed** — current OAuth token lacks `workflow` scope. Need to run `gh auth refresh -h github.com -s workflow` (interactive browser flow) to unlock, then push the two workflow files.
+- **Step 8** Sentry: **N/A** (Cherishu is not on the Tier 1+2 list per broadcast — Tier 1+2 = SeizeLead, Optimo, BillForge, Mailpulse, OutreachIQ, PayDesk, HireTrack, TalkyHub, mailprobe, BusinessVoyage)
+- **Step 9** CHANGELOG.md created: ✓ (Keep-a-Changelog format with full release history reconstructed from git, 0.1.0 → 0.5.0)
+- **Step 10** Pushed to main: ✓ (commits `cc366d4`-base → `87fe839`)
+- **Step 11** This update.
+
+**NOT redeployed** per Master Hub instruction. Server stays on previous build until coordinated deploy.
+
+### Standard Footer (added earlier same day)
 
 - Copied `_shared/templates/components/Footer.tsx.template` → `src/components/Footer.tsx`
 - Replaced `{{PROJECT_NAME}}` → "Cherishu", `{{COMPANY}}` → "TalkyTools"

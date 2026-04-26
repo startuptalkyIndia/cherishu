@@ -8,8 +8,13 @@
     "start": "next start -p 3045",
     "lint": "next lint",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "npx prisma db seed",
+    "db:migrate": "npx prisma migrate deploy",
+    "db:reset": "npx prisma migrate reset --force",
     "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",

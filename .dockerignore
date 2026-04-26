@@ -1,13 +1,48 @@
-node_modules
-.next
-.git
-.env.local
-.env.*.local
-npm-debug.log*
+# Build artifacts
+.next/
+out/
+build/
+dist/
+
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Source control
+.git/
+.gitignore
+.github/
+
+# Editor / OS
+.vscode/
+.idea/
 .DS_Store
-.vscode
-.idea
+*.swp
+
+# Env files
+.env
+.env.local
+.env.development
+.env.test
+
+# Local-only files
+*.local
+*.bak
+docker-compose.yml.bak
+docker-compose.override.yml
 README.md
-*.md
-tsconfig.tsbuildinfo
-.claude
+CLAUDE.md
+COMMS.md
+COMMS-ARCHIVE.md
+CONTEXT.md
+CREDENTIALS.md
+TASKS.md
+SECURITY.md
+.firecrawl/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+*.log

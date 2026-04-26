@@ -1,0 +1,46 @@
+# Standard TalkyTools CI workflow
+# Source: _shared/templates/.github/workflows/ci.yml
+# Runs on every push + PR to main.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          AUTH_SECRET: ci-test-secret-not-for-production
+          NEXTAUTH_URL: http://localhost:3045
+          NEXT_PUBLIC_APP_URL: http://localhost:3045
+
+      - name: Test (if test script exists)
+        run: npm test --if-present

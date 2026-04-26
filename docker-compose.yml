@@ -8,15 +8,19 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cherishu_prod}
       POSTGRES_DB: cherishu
     volumes:
-      - cherishu_db:/var/lib/postgresql/data
+    - cherishu_db:/var/lib/postgresql/data
     networks:
-      - cherishu_net
+    - cherishu_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cherishu -d cherishu"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U cherishu -d cherishu
       interval: 10s
       timeout: 5s
       retries: 5
-
+    mem_limit: 1g
+    memswap_limit: 1500m
+    cpus: 1.0
   app:
     build: .
     container_name: cherishu-app
@@ -27,16 +31,17 @@ services:
     environment:
       DATABASE_URL: postgresql://cherishu:${POSTGRES_PASSWORD:-cherishu_prod}@db:5432/cherishu?schema=public
       AUTH_SECRET: ${AUTH_SECRET}
-      AUTH_TRUST_HOST: "true"
+      AUTH_TRUST_HOST: 'true'
       NEXTAUTH_URL: https://cherishu.talkytools.com
       NODE_ENV: production
     ports:
-      - "3045:3045"
+    - 3045:3045
     networks:
-      - cherishu_net
-
+    - cherishu_net
+    mem_limit: 1g
+    memswap_limit: 1500m
+    cpus: 1.5
 networks:
-  cherishu_net:
-
+  cherishu_net: null
 volumes:
-  cherishu_db:
+  cherishu_db: null

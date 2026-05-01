@@ -183,7 +183,62 @@ async function main() {
     }
   }
 
-  // 6) Platform-wide rewards (only on first run)
+  // 6a) Sample partner merchant — Ferns N Petals (FNP)
+  // Marketplace model: FNP fulfills orders directly, Cherishu earns 10% commission per order.
+  const fnp = await prisma.merchant.upsert({
+    where: { slug: "fnp" },
+    update: {},
+    create: {
+      name: "Ferns N Petals",
+      slug: "fnp",
+      contactEmail: "partners@fnp.com",
+      contactPhone: "+91-92121-92121",
+      commissionPercent: 10,
+      handoffMethod: "email",
+      logoUrl: "https://fnp.com/images/fnp-logo.svg",
+      notes: "Partner since 2026-04. India-wide same-day delivery. Email handoff: partners@fnp.com replies with tracking.",
+      isActive: true,
+    },
+  });
+  console.log(`✓ Merchant: ${fnp.name} (${fnp.slug})`);
+
+  // FNP product catalog (only seed if merchant has no rewards yet)
+  const fnpProductCount = await prisma.reward.count({ where: { merchantId: fnp.id } });
+  if (fnpProductCount === 0) {
+    const fnpCatalog = [
+      { name: "Red Roses Bouquet", desc: "Hand-tied dozen red roses · same-day delivery", sku: "FNP-RR-DOZEN", type: "MERCHANDISE", pts: 799, val: 799, cat: "Flowers", featured: true },
+      { name: "Mixed Roses Bouquet", desc: "20 mixed roses with seasonal greens", sku: "FNP-MR-20", type: "MERCHANDISE", pts: 1199, val: 1199, cat: "Flowers" },
+      { name: "Birthday Chocolate Cake (1 lb)", desc: "Eggless chocolate truffle, candle + knife included", sku: "FNP-CAKE-CHOC-1LB", type: "MERCHANDISE", pts: 999, val: 999, cat: "Cakes", featured: true },
+      { name: "Birthday Vanilla Cake (2 lb)", desc: "Classic vanilla butter cream, customizable name", sku: "FNP-CAKE-VAN-2LB", type: "MERCHANDISE", pts: 1499, val: 1499, cat: "Cakes" },
+      { name: "Premium Gift Hamper", desc: "Curated chocolate, cookies, dry fruits + a card", sku: "FNP-HAMPER-PREM", type: "MERCHANDISE", pts: 2499, val: 2499, cat: "Hampers", featured: true },
+      { name: "Anniversary Special — Roses + Cake", desc: "12 red roses + 1 lb chocolate cake combo", sku: "FNP-COMBO-ANNIV", type: "MERCHANDISE", pts: 1999, val: 1999, cat: "Combos" },
+      { name: "Diwali Sweets Box (500g)", desc: "Assorted kaju katli, soan papdi, pista barfi", sku: "FNP-DIWALI-500", type: "MERCHANDISE", pts: 899, val: 899, cat: "Sweets" },
+      { name: "Indoor Plant — Money Plant", desc: "Air-purifying, ceramic pot included, low maintenance", sku: "FNP-PLANT-MONEY", type: "MERCHANDISE", pts: 599, val: 599, cat: "Plants" },
+      { name: "Personalized Photo Mug", desc: "Upload photo at checkout · ready in 24h", sku: "FNP-MUG-PHOTO", type: "MERCHANDISE", pts: 499, val: 499, cat: "Personalized" },
+      { name: "Premium Champagne (Imported)", desc: "Moët & Chandon Brut Imperial 750ml · 18+ only", sku: "FNP-CHAMP-MOET", type: "MERCHANDISE", pts: 8999, val: 8999, cat: "Beverages" },
+    ];
+    for (const p of fnpCatalog) {
+      await prisma.reward.create({
+        data: {
+          workspaceId: null,
+          merchantId: fnp.id,
+          name: p.name,
+          description: p.desc,
+          providerSku: p.sku,
+          type: p.type as RewardType,
+          provider: "MARKETPLACE",
+          pointsCost: p.pts,
+          currencyValue: p.val,
+          currency: "INR",
+          category: p.cat,
+          featured: p.featured || false,
+        },
+      });
+    }
+    console.log(`✓ Seeded ${fnpCatalog.length} FNP products`);
+  }
+
+  // 6b) Platform-wide rewards (only on first run)
   const platformRewards = [
     { name: "Amazon India Gift Card", desc: "Shop anything on Amazon.in", type: "GIFT_CARD", provider: "AMAZON_INCENTIVES", pts: 500, val: 500, cat: "Shopping", featured: true },
     { name: "Flipkart Voucher", desc: "Use on Flipkart.com", type: "GIFT_CARD", provider: "XOXODAY", pts: 500, val: 500, cat: "Shopping" },

@@ -14,6 +14,23 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Permissions-Policy — disable risky APIs by default
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // Content-Security-Policy — restrict resource origins
+  // NOTE: 'unsafe-inline' and 'unsafe-eval' are required for Next.js client-side rendering.
+  // If you add a nonce-based CSP in the future, remove these directives.
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://api.resend.com https://api.razorpay.com",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; "),
+  },
 ];
 
 const nextConfig: NextConfig = {

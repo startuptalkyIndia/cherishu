@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 const schema = z.object({
   name: z.string().min(1).max(200),
@@ -16,6 +17,13 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Rate limit: 5 leads per hour per IP to prevent spam
+  const ip = getClientIp(req);
+  const rl = rateLimit({ key: `leads:${ip}`, limit: 5, windowSec: 3600 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+  }
+
   let body: any;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request" }, { status: 400 }); }
 

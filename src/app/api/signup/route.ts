@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { emailWelcome } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 const schema = z.object({
   companyName: z.string().min(2).max(80),
@@ -16,6 +17,13 @@ function slugify(s: string) {
 }
 
 export async function POST(req: Request) {
+  // Rate limit: 5 signups per hour per IP
+  const ip = getClientIp(req);
+  const rl = rateLimit({ key: `signup:${ip}`, limit: 5, windowSec: 3600 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+  }
+
   try {
     const body = await req.json();
     const input = schema.parse(body);
@@ -72,7 +80,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, userId: user.id, workspaceId: workspace.id });
   } catch (err: any) {
     if (err?.issues) return NextResponse.json({ error: err.issues[0]?.message || "Invalid input" }, { status: 400 });
-    console.error(err);
+    // Log only the message, not the full error object, to avoid leaking stack traces
+    console.error("[signup-error]", err instanceof Error ? err.message : "Unknown error");
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

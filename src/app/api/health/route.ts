@@ -26,12 +26,14 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (e: any) {
+    // Do not expose raw DB error messages in production
+    const errorDetail = process.env.NODE_ENV === "production" ? "DB error" : (e?.message || "DB error");
     return NextResponse.json(
       {
         status: "degraded",
         timestamp: Date.now(),
         db: "unreachable",
-        error: e?.message || "DB error",
+        error: errorDetail,
         service: "cherishu",
       },
       { status: 503, headers: { "Cache-Control": "no-store, max-age=0" } }

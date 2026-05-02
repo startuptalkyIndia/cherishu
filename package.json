@@ -12,7 +12,7 @@
     "db:migrate": "npx prisma migrate deploy",
     "db:reset": "npx prisma migrate reset --force",
     "db:studio": "prisma studio",
-    "prepare": "husky"
+    "prepare": "husky 2>/dev/null || true"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

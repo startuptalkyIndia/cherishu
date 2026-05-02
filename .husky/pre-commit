@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --config .gitleaks.toml --redact || {
+    echo "❌ gitleaks found secrets in staged files. Commit blocked."
+    exit 1
+  }
+else
+  echo "⚠️  gitleaks not installed locally — skipping. Install: brew install gitleaks"
+fi

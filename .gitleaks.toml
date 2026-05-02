@@ -1,0 +1,19 @@
+title = "TalkyTools gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "talkytools-hardcoded-passwords"
+description = "Block hardcoded internal passwords"
+regex = '''(Shu_bham12!|Admin@2026!|User@2026!)'''
+tags = ["password", "internal"]
+
+[allowlist]
+paths = [
+  '''node_modules/''',
+  '''\.git/''',
+  '''package-lock\.json''',
+  '''pnpm-lock\.yaml''',
+  '''yarn\.lock''',
+]

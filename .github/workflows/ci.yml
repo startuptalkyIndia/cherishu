@@ -44,3 +44,13 @@ jobs:
 
       - name: Test (if test script exists)
         run: npm test --if-present
+
+      - name: Check for hardcoded secrets
+        run: |
+          if grep -r "Shu_bham12\|Admin@2026\|User@2026\|password.*=.*['\"][A-Za-z0-9]\{8,\}" --include="*.ts" --include="*.tsx" --include="*.js" src/ 2>/dev/null | grep -v "node_modules" | grep -v ".env"; then
+            echo "❌ Hardcoded credentials found in source code!"
+            exit 1
+          else
+            echo "✅ No hardcoded credentials found"
+          fi
+        continue-on-error: false

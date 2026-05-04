@@ -39,7 +39,7 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "15.5.15",
     "husky": "^9.1.7",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.13",
     "prisma": "^6.0.1",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",

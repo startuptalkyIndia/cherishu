@@ -1,13 +1,11 @@
 import { requireRole } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function StubCheckout({ searchParams }: { searchParams: Promise<{ workspace?: string; plan?: string }> }) {
-  const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
-  const sp = await searchParams;
+export default async function StubCheckout({ searchParams: _searchParams }: { searchParams: Promise<{ workspace?: string; plan?: string }> }) {
+  await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">

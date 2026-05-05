@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Gift, Trophy, Users, MessageSquare, Cake, BarChart3, Shield, Zap, Award, ClipboardList, Coins, Store, ArrowRight } from "lucide-react";
+import { Heart, Gift, MessageSquare, Cake, BarChart3, Shield, Store } from "lucide-react";
 import MarketingShell from "@/components/MarketingShell";
 
 export const metadata = {

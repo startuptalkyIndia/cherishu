@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail } from "lucide-react";
 
-export default function BillingClient({ currentPlan, subscriptionStatus, seatCount, workspaceId, billingEmail: initBillingEmail }: {
+export default function BillingClient({ currentPlan: _currentPlan, subscriptionStatus: _subscriptionStatus, seatCount: _seatCount, workspaceId: _workspaceId, billingEmail: initBillingEmail }: {
   currentPlan: string;
   subscriptionStatus: string | null;
   seatCount: number;

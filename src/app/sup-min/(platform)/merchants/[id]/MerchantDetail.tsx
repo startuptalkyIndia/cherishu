@@ -18,7 +18,7 @@ const statusBadge: Record<string, string> = {
 export default function MerchantDetail({ merchantId, products: initProducts, orders }: { merchantId: string; products: P[]; orders: O[] }) {
   const router = useRouter();
   const [tab, setTab] = useState<"catalog" | "orders">("catalog");
-  const [products, setProducts] = useState(initProducts);
+  const [products, _setProducts] = useState(initProducts);
   const [csv, setCsv] = useState("");
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<any>(null);

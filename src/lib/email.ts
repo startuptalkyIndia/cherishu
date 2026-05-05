@@ -108,7 +108,7 @@ export async function emailWelcome({ email, name, workspaceName, tempPassword }:
   return sendEmail({ to: email, subject: `Welcome to ${workspaceName} on Cherishu`, html: baseLayout(body, cfg.baseUrl) });
 }
 
-export async function emailKudosReceived({ to, receiverName, senderName, message, points, workspaceName }: { to: string; receiverName: string; senderName: string; message: string; points: number; workspaceName: string }) {
+export async function emailKudosReceived({ to, receiverName: _receiverName, senderName, message, points, workspaceName }: { to: string; receiverName: string; senderName: string; message: string; points: number; workspaceName: string }) {
   const cfg = await getPlatformConfig();
   const body = `
     <h1 style="font-size:22px;margin:0 0 8px;color:#111827;">🎉 You received a kudos!</h1>

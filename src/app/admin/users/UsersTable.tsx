@@ -52,7 +52,7 @@ export default function UsersTable({ initialUsers, total, pageSize, departments 
   async function bulkTopup() {
     setLoading(true);
     const res = await fetch("/api/admin/users/topup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(topup) });
-    const data = await res.json();
+    await res.json();
     setLoading(false);
     if (res.ok) {
       setTopupOpen(false);

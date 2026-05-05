@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import MerchantsList from "./MerchantsList";
-import FilterBar from "@/components/FilterBar";
-
 export const dynamic = "force-dynamic";
 
 export default async function MerchantsPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {

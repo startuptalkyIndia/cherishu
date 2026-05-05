@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Coins, Send, MessageCircle, Smile } from "lucide-react";
+import { Coins, MessageCircle, Smile } from "lucide-react";
 
 const EMOJIS = ["🎉", "👏", "💯", "❤️", "🔥", "🙌", "💜"];
 

@@ -106,7 +106,7 @@ export default async function WorkspacesPage({ searchParams }: { searchParams: P
             {workspaces.length === 0 && (
               <tr><td colSpan={9} className="px-3 py-12 text-center text-sm text-gray-500">
                 {q || plan
-                  ? <>No workspaces match. <a href="/sup-min/workspaces" className="text-indigo-600 hover:text-indigo-800 font-medium">Clear filters</a></>
+                  ? <>No workspaces match. <Link href="/sup-min/workspaces" className="text-indigo-600 hover:text-indigo-800 font-medium">Clear filters</Link></>
                   : "No workspaces yet."}
               </td></tr>
             )}

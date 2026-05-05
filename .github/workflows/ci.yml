@@ -5,10 +5,8 @@
 name: CI
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+  workflow_dispatch:  # manual only — saves GitHub Actions minutes
+
 
 jobs:
   test:

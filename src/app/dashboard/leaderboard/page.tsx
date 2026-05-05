@@ -2,6 +2,8 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Trophy, TrendingUp, Heart, Coins } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function LeaderboardPage() {
   const user = await requireUser();
   if (!user.workspaceId) return null;

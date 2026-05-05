@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Home, Send, Gift, Trophy, Users, Settings, LogOut, Sparkles, Award, ClipboardList, Coins } from "lucide-react";
+import { Heart, Home, Send, Gift, Trophy, Users, Settings, LogOut, Sparkles, Award, ClipboardList, Coins, Bell } from "lucide-react";
 import { signOut } from "next-auth/react";
 
-type NavItem = { href: string; label: string; icon: any };
+type NavItem = { href: string; label: string; icon: any; badge?: number };
 
 const employeeNav: NavItem[] = [
   { href: "/dashboard", label: "Feed", icon: Home },
@@ -34,24 +34,51 @@ const hrNav: NavItem[] = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
+// Mobile bottom nav items (condensed — most-used only)
+const mobileEmployeeNav: NavItem[] = [
+  { href: "/dashboard", label: "Feed", icon: Home },
+  { href: "/dashboard/send", label: "Send", icon: Send },
+  { href: "/dashboard/leaderboard", label: "Board", icon: Trophy },
+  { href: "/dashboard/rewards", label: "Rewards", icon: Gift },
+  { href: "/dashboard/profile", label: "Profile", icon: Users },
+];
+
+const mobileAdminNav: NavItem[] = [
+  { href: "/admin", label: "Overview", icon: Sparkles },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/nominations", label: "Reviews", icon: Award },
+  { href: "/admin/analytics", label: "Stats", icon: Trophy },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
+];
+
 export default function AppShell({
   children,
   user,
   section = "employee",
+  pendingNominations = 0,
 }: {
   children: React.ReactNode;
   user: { name: string; email: string; role: string; workspaceName?: string; giveablePoints?: number; redeemablePoints?: number };
   section?: "employee" | "admin";
+  pendingNominations?: number;
 }) {
   const pathname = usePathname();
   const isManager = user.role === "MANAGER" || user.role === "HR_ADMIN" || user.role === "SUPER_ADMIN";
   const nav = section === "admin" ? hrNav : (isManager ? [...employeeNav.slice(0, 3), ...managerExtras, ...employeeNav.slice(3)] : employeeNav);
   const canSeeAdmin = user.role === "HR_ADMIN" || user.role === "SUPER_ADMIN";
 
+  // Inject badge counts
+  const enrichedNav = nav.map(item =>
+    item.href === "/admin/nominations" ? { ...item, badge: pendingNominations || undefined } : item
+  );
+  const mobileNav = (section === "admin" ? mobileAdminNav : mobileEmployeeNav).map(item =>
+    item.href === "/admin/nominations" ? { ...item, badge: pendingNominations || undefined } : item
+  );
+
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-60 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
+      {/* Sidebar — desktop only */}
+      <aside className="w-60 bg-white border-r border-gray-200 flex-col hidden md:flex">
         <Link href="/dashboard" className="flex items-center gap-2 px-5 h-14 border-b border-gray-200">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
             <Heart className="w-4 h-4" fill="currentColor" />
@@ -59,12 +86,12 @@ export default function AppShell({
           <span className="font-bold text-gray-900">Cherishu</span>
         </Link>
 
-        <div className="p-3">
+        <div className="p-3 flex-1 overflow-y-auto">
           <div className="px-2 pt-2 pb-1 text-xs font-medium text-gray-400 uppercase tracking-wide">
             {section === "admin" ? "Admin" : user.workspaceName || "Workspace"}
           </div>
           <nav className="space-y-0.5">
-            {nav.map((item) => {
+            {enrichedNav.map((item) => {
               const active = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/admin" && pathname.startsWith(item.href));
               return (
                 <Link
@@ -72,8 +99,13 @@ export default function AppShell({
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${active ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
                 >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge ? (
+                    <span className="bg-rose-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -94,7 +126,7 @@ export default function AppShell({
         </div>
 
         {/* Points wallet */}
-        <div className="mt-auto p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-200">
           <div className="bg-indigo-50 rounded-lg p-3">
             <div className="flex items-center justify-between text-xs text-indigo-700 font-medium mb-1">
               <span>Give</span>
@@ -106,7 +138,7 @@ export default function AppShell({
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2 px-1">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-medium">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-medium shrink-0">
               {user.name[0]?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -125,20 +157,67 @@ export default function AppShell({
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-16 md:pb-0">
         {/* Mobile top bar */}
-        <div className="md:hidden bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
+        <div className="md:hidden bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 sticky top-0 z-30">
+          <Link href={section === "admin" ? "/admin" : "/dashboard"} className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
               <Heart className="w-3.5 h-3.5" fill="currentColor" />
             </div>
-            <span className="font-bold text-gray-900">Cherishu</span>
+            <div>
+              <span className="font-bold text-gray-900">Cherishu</span>
+              {section === "admin" && <span className="ml-1.5 text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-medium">Admin</span>}
+            </div>
           </Link>
-          <button onClick={() => signOut({ callbackUrl: "/" })} className="text-gray-500">
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {pendingNominations > 0 && (
+              <Link href="/admin/nominations" className="relative text-gray-500">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {pendingNominations > 9 ? "9+" : pendingNominations}
+                </span>
+              </Link>
+            )}
+            {canSeeAdmin && (
+              <Link
+                href={section === "admin" ? "/dashboard" : "/admin"}
+                className="text-xs text-indigo-600 font-medium px-2 py-1 rounded bg-indigo-50"
+              >
+                {section === "admin" ? "Employee" : "Admin"}
+              </Link>
+            )}
+            <button onClick={() => signOut({ callbackUrl: "/" })} className="text-gray-500 p-1">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+
         {children}
+
+        {/* Mobile bottom navigation */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 flex">
+          {mobileNav.map((item) => {
+            const active = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/admin" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2 relative ${active ? "text-indigo-600" : "text-gray-400"}`}
+              >
+                <div className="relative">
+                  <item.icon className="w-5 h-5" />
+                  {item.badge ? (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  ) : null}
+                </div>
+                <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                {active && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-indigo-600 rounded-full" />}
+              </Link>
+            );
+          })}
+        </nav>
       </main>
     </div>
   );

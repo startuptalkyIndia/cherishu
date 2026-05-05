@@ -103,8 +103,8 @@ export default function UsersTable({ initialUsers, total, pageSize, departments 
         </button>
       </FilterBar>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+        <table className="w-full text-left min-w-[900px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Name</th>

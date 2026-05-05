@@ -2,6 +2,9 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { formatDistanceToNow } from "date-fns";
 import { REWARD_TYPE_META } from "@/lib/reward-providers";
+import { EmptyState } from "@/components/EmptyState";
+
+export const dynamic = "force-dynamic";
 
 const statusBadge: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-800",
@@ -28,12 +31,18 @@ export default async function RedemptionsPage() {
       <p className="text-sm text-gray-500 mt-0.5 mb-6">Track your reward orders and voucher codes.</p>
 
       {redemptions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-sm text-gray-500">
-          You haven&apos;t redeemed anything yet. Visit the <a href="/dashboard/rewards" className="text-indigo-600 hover:text-indigo-800 font-medium">rewards catalog</a> to get started.
+        <div className="bg-white rounded-xl border border-gray-200">
+          <EmptyState
+            context="Cherishu · My Redemptions"
+            icon="📦"
+            title="No redemptions yet"
+            reason="Redeem your earned points for gift cards, experiences, or merchandise. The catalog is waiting."
+            action={{ label: "Browse rewards", href: "/dashboard/rewards" }}
+          />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-left">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-left min-w-[640px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Reward</th>

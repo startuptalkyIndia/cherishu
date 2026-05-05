@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Coins, Loader2, Star, X, MapPin } from "lucide-react";
 import { REWARD_TYPE_META } from "@/lib/reward-providers";
+import { EmptyState } from "@/components/EmptyState";
 
 type Reward = {
   id: string;
@@ -69,8 +71,14 @@ export default function RewardsGrid({ rewards, redeemable }: { rewards: Reward[]
 
   if (rewards.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-        <p className="text-sm text-gray-500">No rewards available in this category yet.</p>
+      <div className="bg-white rounded-xl border border-gray-200">
+        <EmptyState
+          context="Cherishu · Rewards Catalog"
+          icon="🎁"
+          title="No rewards in this category"
+          reason="Your HR admin hasn't added rewards here yet. Earn points by getting recognized — they'll be waiting for you."
+          action={{ label: "Go to feed", href: "/dashboard" }}
+        />
       </div>
     );
   }
@@ -87,10 +95,9 @@ export default function RewardsGrid({ rewards, redeemable }: { rewards: Reward[]
               onClick={() => setSelected(r)}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md text-left transition"
             >
-              <div className="aspect-video bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center text-5xl relative">
+              <div className="aspect-video bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center text-5xl relative overflow-hidden">
                 {r.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={r.imageUrl} alt={r.name} className="w-full h-full object-cover" />
+                  <Image src={r.imageUrl} alt={r.name} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
                 ) : (
                   <span>{meta?.emoji || "🎁"}</span>
                 )}

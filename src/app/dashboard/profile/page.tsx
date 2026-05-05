@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, Coins, Award, Gift } from "lucide-react";
+import ProfileEditForm from "./ProfileEditForm";
 
 export const dynamic = "force-dynamic";
 
@@ -33,15 +34,18 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-20 h-20 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-3xl font-semibold">
-          {user.name[0]?.toUpperCase()}
+      <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+        <div className="flex items-center gap-4">
+          <div className="w-20 h-20 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-3xl font-semibold shrink-0">
+            {user.name[0]?.toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+            <p className="text-sm text-gray-500">{user.email} · {user.jobTitle || "Team member"}{user.department ? ` · ${user.department}` : ""}</p>
+            <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{user.role.replace("_", " ")}</span>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-          <p className="text-sm text-gray-500">{user.email} · {user.jobTitle || "Team member"}{user.department ? ` · ${user.department}` : ""}</p>
-          <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{user.role.replace("_", " ")}</span>
-        </div>
+        <ProfileEditForm name={user.name} jobTitle={user.jobTitle} department={user.department} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

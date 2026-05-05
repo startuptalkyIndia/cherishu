@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const user = await requireUser();
   if (!user.workspaceId) return null;
 
-  const [recognitions, myStats, workspaceStats] = await Promise.all([
+  const [recognitions, myStats, workspaceStats, hasSentKudos] = await Promise.all([
     prisma.recognition.findMany({
       where: { workspaceId: user.workspaceId },
       include: {
@@ -30,6 +30,7 @@ export default async function DashboardPage() {
       _count: true,
     }),
     prisma.recognition.count({ where: { workspaceId: user.workspaceId } }),
+    prisma.recognition.count({ where: { workspaceId: user.workspaceId, senderId: user.id, isSystem: false } }),
   ]);
 
   return (
@@ -43,6 +44,20 @@ export default async function DashboardPage() {
           <Send className="w-4 h-4" /> Send Kudos
         </Link>
       </div>
+
+      {/* First-time welcome nudge */}
+      {hasSentKudos === 0 && (
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 mb-4 text-white flex items-start gap-3">
+          <div className="text-2xl shrink-0">👋</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm">Welcome to Cherishu, {user.name.split(" ")[0]}!</div>
+            <div className="text-indigo-100 text-xs mt-0.5">You have <span className="font-semibold text-white">{user.giveablePoints} points</span> to give. Start by recognizing a teammate — it takes 10 seconds and makes their day.</div>
+          </div>
+          <Link href="/dashboard/send" className="shrink-0 bg-white text-indigo-700 font-semibold text-xs px-3 py-2 rounded-lg hover:bg-indigo-50 whitespace-nowrap">
+            Send first kudos →
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <StatCard icon={Coins} label="Points to Give" value={user.giveablePoints} tone="indigo" />

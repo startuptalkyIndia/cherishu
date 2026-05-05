@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Send, Heart, Coins, Users } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -83,14 +84,20 @@ export default async function TeamPage() {
       </div>
 
       {reports.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-sm text-gray-500">
-          {user.role === "MANAGER"
-            ? "No direct reports assigned to you yet. Ask HR to set you as the manager for your team in /admin/users."
-            : "No teammates yet."}
+        <div className="bg-white rounded-xl border border-gray-200">
+          <EmptyState
+            context={user.role === "MANAGER" ? "Cherishu · My Team" : "Cherishu · All Teammates"}
+            icon="👥"
+            title={user.role === "MANAGER" ? "No direct reports yet" : "No teammates yet"}
+            reason={user.role === "MANAGER"
+              ? "Ask your HR admin to assign team members to you in the Users section."
+              : "Once teammates are added to your workspace, they'll show up here."}
+            action={{ label: user.role === "MANAGER" ? "Contact HR admin" : "Go to feed", href: user.role === "MANAGER" ? "/dashboard" : "/dashboard" }}
+          />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-left">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-left min-w-[640px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-3 py-3 font-medium text-gray-500 text-xs uppercase">Name</th>

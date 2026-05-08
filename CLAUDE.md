@@ -1,5 +1,20 @@
 # PRODUCTION SYNC PROTOCOL
 > Every agent working on this project MUST follow this checklist before considering any task done.
+## ⚠️ DEPLOY RULE — READ BEFORE EVERY DEPLOY
+**Only use `--build` if you changed code.**
+
+| Situation | Command |
+|---|---|
+| Code changed (new feature, bug fix) | `docker compose up -d --build` |
+| Config change only (.env, docker-compose.yml) | `docker compose up -d` |
+| Git pull only (catching up, no local changes) | `docker compose up -d` |
+| Container crashed, restart it | `docker compose up -d` |
+
+**Never run `--build` just because you pulled new commits from git.**
+Check: `git diff HEAD~1 --name-only` — if only non-code files changed, skip `--build`.
+Unnecessary builds waste 5-10 min CPU + can crash the server if multiple run simultaneously.
+
+
 
 ## After Every Code Change
 - [ ] Run `git add` + `git commit` + `git push origin main`

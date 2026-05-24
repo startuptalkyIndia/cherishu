@@ -4,18 +4,21 @@ import { redirect } from "next/navigation";
 import crypto from "crypto";
 
 const COOKIE = "cherishu_pa";
-const SECRET = process.env.AUTH_SECRET || "";
 
-if (!SECRET && process.env.NODE_ENV === "production") {
-  // Crash loudly in production — platform tokens cannot be signed with an empty secret
-  throw new Error("[platform-auth] AUTH_SECRET env var is required in production");
+// Resolve the signing secret lazily so we don't crash at module-import time
+// during `next build` (when AUTH_SECRET may not be in the build environment).
+// The check still fires the first time a token is signed/verified at runtime.
+function getSigningSecret(): string {
+  const SECRET = process.env.AUTH_SECRET || "";
+  if (!SECRET && process.env.NODE_ENV === "production") {
+    throw new Error("[platform-auth] AUTH_SECRET env var is required in production");
+  }
+  // Dev-only fallback — never used in production (the throw above blocks that path).
+  return SECRET || "dev-only-insecure-do-not-use-in-production";
 }
 
-// Use a non-empty fallback only in development (never in production)
-const SIGNING_SECRET = SECRET || "dev-only-insecure-do-not-use-in-production";
-
 function sign(payload: string) {
-  return crypto.createHmac("sha256", SIGNING_SECRET).update(payload).digest("hex");
+  return crypto.createHmac("sha256", getSigningSecret()).update(payload).digest("hex");
 }
 
 export function makeToken(adminId: string) {

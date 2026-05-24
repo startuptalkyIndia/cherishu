@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: cherishu-db
-    restart: "no"
+    restart: on-failure
     environment:
       POSTGRES_USER: cherishu
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cherishu_prod}
@@ -24,7 +24,7 @@ services:
   app:
     build: .
     container_name: cherishu-app
-    restart: "no"
+    restart: on-failure
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +38,12 @@ services:
     - 3045:3045
     networks:
     - cherishu_net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3045/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     mem_limit: 1g
     memswap_limit: 1500m
     cpus: 1.5

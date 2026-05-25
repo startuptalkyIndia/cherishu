@@ -12,7 +12,8 @@
     "db:migrate": "npx prisma migrate deploy",
     "db:reset": "npx prisma migrate reset --force",
     "db:studio": "prisma studio",
-    "prepare": "husky 2>/dev/null || true"
+    "prepare": "husky 2>/dev/null || true",
+    "test:smoke": "playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -43,6 +44,7 @@
     "prisma": "^6.0.1",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "@playwright/test": "^1.48.0"
   }
 }

@@ -14,7 +14,6 @@ VN=$(q "select name from \"CompanyValue\" where \"workspaceId\"='$WS' order by n
 BN=$(q "select name from \"Badge\" where \"workspaceId\"='$WS' order by name limit 1"); BID=$(q "select id from \"Badge\" where \"workspaceId\"='$WS' and name='$BN'")
 curl -s -b $J/a.jar -X POST $B/api/admin/rewards -H 'content-type: application/json' -d '{"name":"SDTestReward","description":"x","pointsCost":10,"type":"MERCHANDISE","provider":"MANUAL"}' > $J/rw.json; cat $J/rw.json | head -c 200; echo
 RID=$(q "select id from \"Reward\" where name='SDTestReward'")
-ok value-visible-before $(curl -s -b $J/a.jar $B/admin/values | grep -c "$VN") $(curl -s -b $J/a.jar $B/admin/values | grep -c "$VN")
 [ "$(curl -s -b $J/a.jar $B/admin/values | grep -c "$VN")" -gt 0 ] && ok value-listed yes yes || ok value-listed no yes
 [ "$(curl -s -b $J/a.jar $B/admin/rewards | grep -c SDTestReward)" -gt 0 ] && ok reward-listed yes yes || ok reward-listed no yes
 # admin deletes
@@ -47,4 +46,9 @@ ok ws-gone-from-sup-min-detail "$(curl -s -o /dev/null -w '%{http_code}' -b $J/s
 ok existing-session-locked-out "$(curl -s -o /dev/null -w '%{http_code}' -b $J/a.jar $B/admin/values)" 307
 ok existing-session-api-locked "$(curl -s -o /dev/null -w '%{http_code}' -b $J/a.jar -X POST $B/api/redemptions -H 'content-type: application/json' -d "{\"rewardId\":\"x\"}")" 307
 S=$(adminlogin); echo "$S" | grep -q admin@cherishu.com && ok deleted-ws-admin-login-blocked still-logged-in blocked || ok deleted-ws-admin-login-blocked blocked blocked
+# restore (platform admin) brings the workspace back
+ok ws-restore-http "$(curl -s -o /dev/null -w '%{http_code}' -b $J/s.jar -X POST $B/api/sup-min/workspaces/$WS/restore)" 200
+ok ws-restore-clears-deletedAt "$(q "select count(*) from \"Workspace\" where id='$WS' and \"deletedAt\" is null")" 1
+ok ws-restore-twice-404 "$(curl -s -o /dev/null -w '%{http_code}' -b $J/s.jar -X POST $B/api/sup-min/workspaces/$WS/restore)" 404
+ok ws-back-in-sup-min-list "$([ "$(curl -s -b $J/s.jar $B/sup-min/workspaces | grep -c acme)" -gt 0 ] && echo yes)" yes
 echo "RESULT pass=$PASS fail=$FAIL"

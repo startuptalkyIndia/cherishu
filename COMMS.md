@@ -4,6 +4,7 @@
 - **Review (talkytools-code-review) on 2443e08: FIX.** Billing MRR/trial/list and dashboard/analytics counts still counted deleted workspaces; no way to undo a workspace delete.
 - **Done:** those queries now filter `workspace.deletedAt: null`; new `POST /api/sup-min/workspaces/[id]/restore` (platform admin) clears deletedAt. Emails of a deleted workspace's users stay reserved until restored (restore is the answer to 'email exists').
 - **Open decision (founder):** deleting a paying workspace does NOT cancel its Razorpay subscription; cancel it by hand before deleting.
+- **Test file:** e2e.sh lost the always-true 'value-visible-before' check and gained restore checks (restore 200, clears deletedAt, second restore 404, workspace back in list). NOT re-run after this edit (needs the chr-sd-pg container + built app); run it before relying on it.
 - **Verify:** tsc 0 errors. Deploy: run the 4 ALTER TABLE statements from the 2443e08 entry after a pg_dump, before the new image.
 
 ## 2026-10-12 IST — feat: soft delete for Workspace, Reward, Badge, CompanyValue

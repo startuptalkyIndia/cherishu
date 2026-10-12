@@ -9,17 +9,14 @@
 - Workspace login: https://cherishu.talkytools.com/login
 - Super admin: https://cherishu.talkytools.com/sup-min  *(noindex, never linked from public UI)*
 
-## Standard credentials (matches seed)
+## Credentials (corrected 2026-10-12)
 
-Cherishu uses two parallel auth systems:
+There are NO default passwords. Earlier versions of this file listed the platform's standard seed passwords; they do not exist on production and must not be assumed to.
 
-| Role | Auth table | URL | Email | Password |
-|---|---|---|---|---|
-| **Super Admin** | `PlatformAdmin` | `/sup-min` | `superadmin@cherishu.com` | `Shu_bham12!` |
-| **Admin (HR_ADMIN)** | `User` | `/login` | `admin@cherishu.com` | `Admin@2026!` |
-| **Demo User (EMPLOYEE)** | `User` | `/login` | `user@cherishu.com` | `User@2026!` |
-
-Demo workspace seeded: **Acme Inc.** (slug `acme`) with 5 additional teammates (`priya@`, `raj@`, `anita@`, `vikram@`, `sana@` — all `@cherishu.com` / `User@2026!`).
+- `prisma/seed.ts` reads `SEED_SUPERADMIN_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_DEMO_PASSWORD` from the environment and refuses to run without them.
+- In production the seed creates ONLY the PlatformAdmin (`/sup-min`). The demo workspace (Acme Inc.) and demo users are created only outside production or with `SEED_DEMO=1`.
+- The live super-admin password is held by the founder and was never written to this repo. Change it at first login and rotate before any public launch.
+- Local development: set the three `SEED_*` variables in your own `.env` (not committed), then `npx prisma db seed`.
 
 ## Server / infra
 

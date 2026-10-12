@@ -44,8 +44,8 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
   const activeSubs = await prisma.subscription.findMany({ where: { status: "ACTIVE" } });
   const mrr = activeSubs.reduce((sum, s) => sum + (s.pricePerSeatMonthly * s.seatsPurchased), 0);
   const trialCount = await prisma.subscription.count({ where: { status: "TRIAL" } });
-  const workspaceCount = await prisma.workspace.count();
-  const paidWorkspaces = await prisma.workspace.count({ where: { plan: { in: ["pro", "enterprise"] } } });
+  const workspaceCount = await prisma.workspace.count({ where: { deletedAt: null } });
+  const paidWorkspaces = await prisma.workspace.count({ where: { deletedAt: null, plan: { in: ["pro", "enterprise"] } } });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">

@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   });
 
   // Email HR admins
-  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId, deletedAt: null } });
   if (workspace?.emailOnNomination) {
     const hrAdmins = await prisma.user.findMany({
       where: { workspaceId: user.workspaceId, role: "HR_ADMIN", isActive: true },

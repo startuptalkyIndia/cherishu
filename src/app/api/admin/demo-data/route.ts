@@ -45,7 +45,7 @@ export async function POST() {
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
   if (!admin.workspaceId) return NextResponse.json({ error: "No workspace" }, { status: 400 });
 
-  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId, deletedAt: null } });
   if (!workspace) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
   // Create demo users (with @demo.{slug} emails so they don't collide with real invites)
@@ -80,8 +80,8 @@ export async function POST() {
 
   // Fetch badges + values
   const [badges, values] = await Promise.all([
-    prisma.badge.findMany({ where: { workspaceId: workspace.id } }),
-    prisma.companyValue.findMany({ where: { workspaceId: workspace.id } }),
+    prisma.badge.findMany({ where: { workspaceId: workspace.id, deletedAt: null } }),
+    prisma.companyValue.findMany({ where: { workspaceId: workspace.id, deletedAt: null } }),
   ]);
 
   // Create 15 recognitions spread over the last 7 days

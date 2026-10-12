@@ -31,6 +31,14 @@ export async function POST(req: Request) {
   });
   if (!receiver) return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
 
+  // Reject a badge/value that was removed (soft-deleted) or belongs to another workspace.
+  if (input.badgeId && !(await prisma.badge.findFirst({ where: { id: input.badgeId, workspaceId: user.workspaceId, deletedAt: null }, select: { id: true } }))) {
+    return NextResponse.json({ error: "Badge not found" }, { status: 400 });
+  }
+  if (input.valueId && !(await prisma.companyValue.findFirst({ where: { id: input.valueId, workspaceId: user.workspaceId, deletedAt: null }, select: { id: true } }))) {
+    return NextResponse.json({ error: "Value not found" }, { status: 400 });
+  }
+
   const [recognition] = await prisma.$transaction([
     prisma.recognition.create({
       data: {
@@ -54,7 +62,7 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId, deletedAt: null } });
 
   // Fire-and-forget kudos email
   if (workspace?.emailOnKudos && !input.isPrivate) {
@@ -74,8 +82,8 @@ export async function POST(req: Request) {
     if (chat) {
       let badgeName: string | null = null;
       let valueName: string | null = null;
-      if (input.badgeId) badgeName = (await prisma.badge.findUnique({ where: { id: input.badgeId } }))?.name || null;
-      if (input.valueId) valueName = (await prisma.companyValue.findUnique({ where: { id: input.valueId } }))?.name || null;
+      if (input.badgeId) badgeName = (await prisma.badge.findFirst({ where: { id: input.badgeId, workspaceId: user.workspaceId, deletedAt: null } }))?.name || null;
+      if (input.valueId) valueName = (await prisma.companyValue.findFirst({ where: { id: input.valueId, workspaceId: user.workspaceId, deletedAt: null } }))?.name || null;
       postToChat(chat.type, chat.url, {
         kind: "kudos",
         workspaceName: workspace.name,

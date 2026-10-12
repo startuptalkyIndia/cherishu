@@ -11,7 +11,7 @@ export default async function AdminHome() {
   since.setDate(1);
   since.setHours(0, 0, 0, 0);
 
-  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId, deletedAt: null } });
 
   const [users, recentKudos, monthlyKudos, redemptions, totalPointsGiven, budget,
          realUsersCount, rewardCount, kudosCount] = await Promise.all([
@@ -28,10 +28,10 @@ export default async function AdminHome() {
       where: { workspaceId: user.workspaceId, createdAt: { gte: since } },
       _sum: { points: true },
     }),
-    prisma.workspace.findUnique({ where: { id: user.workspaceId }, select: { monthlyBudgetPoints: true } }),
+    prisma.workspace.findUnique({ where: { id: user.workspaceId, deletedAt: null }, select: { monthlyBudgetPoints: true } }),
     // Checklist signals
     prisma.user.count({ where: { workspaceId: user.workspaceId, email: { not: { contains: "@demo." } } } }),
-    prisma.reward.count({ where: { workspaceId: user.workspaceId } }),
+    prisma.reward.count({ where: { workspaceId: user.workspaceId, deletedAt: null } }),
     prisma.recognition.count({ where: { workspaceId: user.workspaceId } }),
   ]);
 

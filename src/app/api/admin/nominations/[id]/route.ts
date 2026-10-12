@@ -67,7 +67,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   });
 
   // Notify nominee + chat webhook (fire-and-forget)
-  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId, deletedAt: null } });
   if (workspace?.emailOnKudos) {
     emailKudosReceived({
       to: nomination.nominee.email,

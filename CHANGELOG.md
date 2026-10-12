@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+- 2026-10-12 feat: soft delete (`deletedAt`) for Workspace, Reward, Badge, CompanyValue; delete routes no longer hard-delete or cascade; all read paths and login filter deleted rows. Additive columns, see COMMS.
+
 ### Added
 - Standard TalkyTools components: Footer, EmptyState, CookieConsent
 - `/api/health` endpoint with DB connectivity check

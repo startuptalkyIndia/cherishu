@@ -1,5 +1,22 @@
 # Cherishu — Master Hub Comms
 
+## 2026-10-12 IST — feat: soft delete for Workspace, Reward, Badge, CompanyValue
+
+**What:** the four dangerous hard deletes now set `deletedAt = now()` instead of removing rows. Super-admin workspace delete used to cascade-wipe a company's users, kudos, redemptions (irreversible); admin reward/badge/value deletes and the super-admin reward delete were hard deletes too. **Why:** DB_STANDARD / HOW_WE_BUILD (soft delete, additive only, make deletes reversible). **Done when:** nullable `deletedAt` on the 4 models, delete routes only stamp it, every read path filters `deletedAt: null`, a deleted workspace cannot log in or appear anywhere. **Out of scope:** a restore UI (restore = `UPDATE ... SET "deletedAt" = NULL`), other models, hard purge job, changes to unrelated behaviour. **Verify:** `tsc` 0, `next build` ok, `tests/soft-delete/e2e.sh` against throwaway Postgres + built app (27/27).
+**Schema (additive, project uses `prisma db push`, no migrations folder) - DEPLOY AGENT: apply BEFORE the container restart (B.18), after a `pg_dump`:**
+```sql
+ALTER TABLE "Workspace"    ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Reward"       ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Badge"        ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+ALTER TABLE "CompanyValue" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+```
+(Equivalent to `prisma db push` with the new schema; no drops, no renames, no index changes.) The new code reads `deletedAt`, so the old container + new columns is safe, new container + old schema is NOT.
+**Behaviour notes:** (1) login (`lib/auth.ts`) and `getSessionUser` (`lib/session.ts`) refuse users of a soft-deleted workspace, so existing sessions are locked out on their next request too; (2) re-creating a value/badge with the name of a soft-deleted one restores that row (the `(workspaceId, name)` unique slot is still held); (3) kudos with a deleted/foreign badge or value now returns 400; (4) weekly digest and auto-kudos cron skip deleted workspaces; (5) deleting a reward also sets `isActive=false`.
+**Deliberately NOT filtered (history must stay readable):** `include: { reward | badge | value }` on past redemptions/recognitions (profile, feed, exports, merchant redemption history, admin analytics name lookup) so old records still show their reward/badge name; `workspace.findUnique({ where: { slug } })` in signup and sup-min create (slug stays unique, a deleted slug is not reused); `reward-providers.ts` fulfilment of an already-placed redemption. Soft-deleted workspaces' users still hold their emails (signup with that email says "already registered"); users of a deleted workspace are excluded from the sup-min user count.
+**Verified locally (throwaway Postgres 16 in docker, built app):** admin delete value/badge/reward returns 200, rows kept with `deletedAt` set, gone from admin pages, send page, rewards catalog; redeeming a deleted reward 404; kudos with deleted badge 400; super-admin delete workspace 200, workspace + 7 users + kudos still in DB, gone from sup-min list, detail 404, existing admin session redirected, fresh login rejected.
+
+---
+
 ## 2026-10-12 IST — feat: feedback widget (benchmark parity item)
 
 **What/why:** parity gap (every live product gets the feedback widget). **Change:** shared `FeedbackWidget` (hidden on /login, /signup, /sup-min), `POST /api/feedback` (hand-validated, 5/min per X-Real-IP with a swept map, 5 KB cap, 500 on DB failure), additive Prisma model `Feedback` (table `"Feedback"`, index `Feedback_createdAt_idx`), widget mounted in the root layout after CookieConsent. **Out of scope:** cron schedule, payments, email provider.

@@ -29,6 +29,7 @@ export async function POST(req: Request) {
     where: {
       id: rewardId,
       isActive: true,
+      deletedAt: null,
       OR: [{ workspaceId: user.workspaceId }, { workspaceId: null }],
     },
     include: { merchant: true },
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
 
   // Send email if redemption was auto-fulfilled
   if (updated.status === "FULFILLED") {
-    const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId } });
+    const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId, deletedAt: null } });
     if (workspace?.emailOnRedemption) {
       emailRedemptionFulfilled({
         to: user.email,

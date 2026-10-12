@@ -37,7 +37,7 @@ export default async function AnalyticsPage() {
     take: 10,
   });
   const wsIds = byWs.map(r => r.workspaceId);
-  const wsMap = new Map((await prisma.workspace.findMany({ where: { id: { in: wsIds } }, select: { id: true, name: true } })).map(w => [w.id, w.name]));
+  const wsMap = new Map((await prisma.workspace.findMany({ where: { id: { in: wsIds }, deletedAt: null }, select: { id: true, name: true } })).map(w => [w.id, w.name]));
 
   // Redemptions breakdown
   const redemptionsByStatus = await prisma.redemption.groupBy({ by: ["status"], _count: true });

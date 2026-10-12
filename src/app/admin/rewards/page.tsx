@@ -6,7 +6,7 @@ export default async function AdminRewardsPage() {
   const user = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
   if (!user.workspaceId) return null;
   const rewards = await prisma.reward.findMany({
-    where: { OR: [{ workspaceId: user.workspaceId }, { workspaceId: null }] },
+    where: { deletedAt: null, OR: [{ workspaceId: user.workspaceId }, { workspaceId: null }] },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
   const providerConfigs = await prisma.rewardProviderConfig.findMany({

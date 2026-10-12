@@ -21,6 +21,7 @@ export default async function RewardsPage({ searchParams }: { searchParams: Prom
 
   const where: any = {
     isActive: true,
+    deletedAt: null,
     OR: [{ workspaceId: user.workspaceId }, { workspaceId: null }],
   };
   if (type) where.type = type;

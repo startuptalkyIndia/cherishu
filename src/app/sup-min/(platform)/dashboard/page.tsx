@@ -6,13 +6,14 @@ export const dynamic = "force-dynamic";
 
 export default async function SupMinDashboard() {
   const [workspaces, userCount, recognitionCount, redemptionCount, pointsSum, recentWorkspaces, topWorkspaces] = await Promise.all([
-    prisma.workspace.count(),
-    prisma.user.count(),
+    prisma.workspace.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where: { OR: [{ workspaceId: null }, { workspace: { deletedAt: null } }] } }),
     prisma.recognition.count(),
     prisma.redemption.count(),
     prisma.recognition.aggregate({ _sum: { points: true } }),
-    prisma.workspace.findMany({ orderBy: { createdAt: "desc" }, take: 5, include: { _count: { select: { users: true } } } }),
+    prisma.workspace.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 5, include: { _count: { select: { users: true } } } }),
     prisma.workspace.findMany({
+      where: { deletedAt: null },
       orderBy: { recognitions: { _count: "desc" } },
       take: 5,
       include: { _count: { select: { recognitions: true, users: true } } },

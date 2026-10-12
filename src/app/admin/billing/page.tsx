@@ -11,7 +11,7 @@ export default async function BillingPage() {
   if (!admin.workspaceId) return null;
 
   const [workspace, seatCount, subscription] = await Promise.all([
-    prisma.workspace.findUnique({ where: { id: admin.workspaceId } }),
+    prisma.workspace.findUnique({ where: { id: admin.workspaceId, deletedAt: null } }),
     prisma.user.count({ where: { workspaceId: admin.workspaceId, isActive: true, email: { not: { contains: "@demo." } } } }),
     prisma.subscription.findUnique({ where: { workspaceId: admin.workspaceId } }),
   ]);

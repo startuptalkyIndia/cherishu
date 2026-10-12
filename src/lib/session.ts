@@ -7,10 +7,13 @@ export async function getSessionUser() {
   if (!session?.user) return null;
   const id = (session.user as any).id as string;
   if (!id) return null;
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
     include: { workspace: true },
   });
+  // A soft-deleted workspace locks out all of its users (existing sessions included).
+  if (user?.workspace?.deletedAt) return null;
+  return user;
 }
 
 export async function requireUser() {

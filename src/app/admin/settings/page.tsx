@@ -9,9 +9,9 @@ export default async function SettingsPage() {
   if (!user.workspaceId) return null;
 
   const [workspace, values, badges] = await Promise.all([
-    prisma.workspace.findUnique({ where: { id: user.workspaceId } }),
-    prisma.companyValue.findMany({ where: { workspaceId: user.workspaceId }, orderBy: { name: "asc" } }),
-    prisma.badge.findMany({ where: { workspaceId: user.workspaceId }, orderBy: { name: "asc" } }),
+    prisma.workspace.findUnique({ where: { id: user.workspaceId, deletedAt: null } }),
+    prisma.companyValue.findMany({ where: { workspaceId: user.workspaceId, deletedAt: null }, orderBy: { name: "asc" } }),
+    prisma.badge.findMany({ where: { workspaceId: user.workspaceId, deletedAt: null }, orderBy: { name: "asc" } }),
   ]);
 
   if (!workspace) return null;

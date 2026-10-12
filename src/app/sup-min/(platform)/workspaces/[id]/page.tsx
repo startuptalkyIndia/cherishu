@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ws = await prisma.workspace.findUnique({
-    where: { id },
+    where: { id, deletedAt: null },
     include: {
       users: { orderBy: { createdAt: "desc" } },
-      _count: { select: { users: true, recognitions: true, redemptions: true, rewards: true } },
+      _count: { select: { users: true, recognitions: true, redemptions: true, rewards: { where: { deletedAt: null } } } },
     },
   });
   if (!ws) return notFound();

@@ -18,8 +18,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = String(credentials?.password || "");
         if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email }, include: { workspace: { select: { deletedAt: true } } } });
         if (!user || !user.passwordHash || !user.isActive) return null;
+        if (user.workspace?.deletedAt) return null; // soft-deleted workspace cannot log in
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;

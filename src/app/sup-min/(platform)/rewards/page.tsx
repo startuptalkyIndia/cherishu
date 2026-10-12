@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PlatformRewardsPage() {
   const rewards = await prisma.reward.findMany({
-    where: { workspaceId: null },
+    where: { workspaceId: null, deletedAt: null },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
   return (

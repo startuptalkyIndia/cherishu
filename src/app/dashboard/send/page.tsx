@@ -15,8 +15,8 @@ export default async function SendPage({ searchParams }: { searchParams: Promise
       select: { id: true, name: true, email: true, avatarUrl: true, jobTitle: true },
       orderBy: { name: "asc" },
     }),
-    prisma.badge.findMany({ where: { workspaceId: user.workspaceId }, orderBy: { name: "asc" } }),
-    prisma.companyValue.findMany({ where: { workspaceId: user.workspaceId }, orderBy: { name: "asc" } }),
+    prisma.badge.findMany({ where: { workspaceId: user.workspaceId, deletedAt: null }, orderBy: { name: "asc" } }),
+    prisma.companyValue.findMany({ where: { workspaceId: user.workspaceId, deletedAt: null }, orderBy: { name: "asc" } }),
   ]);
 
   return (

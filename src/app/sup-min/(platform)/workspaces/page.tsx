@@ -13,7 +13,7 @@ export default async function WorkspacesPage({ searchParams }: { searchParams: P
   const plan = sp.plan || "";
   const sort = sp.sort || "createdAt-desc";
 
-  const where: any = {};
+  const where: any = { deletedAt: null };
   if (plan) where.plan = plan;
   if (q) {
     where.OR = [

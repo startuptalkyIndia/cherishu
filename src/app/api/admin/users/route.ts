@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (existing) return NextResponse.json({ error: "Email already exists" }, { status: 400 });
 
   // Enforce seat limit for free plan
-  const workspaceCheck = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+  const workspaceCheck = await prisma.workspace.findUnique({ where: { id: admin.workspaceId, deletedAt: null } });
   if (workspaceCheck?.plan === "free") {
     const seatCount = await prisma.user.count({
       where: { workspaceId: admin.workspaceId, isActive: true, email: { not: { contains: "@demo." } } },
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   });
 
   // Send welcome email if enabled
-  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+  const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId, deletedAt: null } });
   if (workspace?.emailOnWelcome) {
     emailWelcome({ email: user.email, name: user.name, workspaceName: workspace.name, tempPassword: input.password }).catch(() => {});
   }

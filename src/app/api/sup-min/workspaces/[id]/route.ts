@@ -20,6 +20,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (parsed.data.name !== undefined) data.name = parsed.data.name;
   if (parsed.data.plan !== undefined) data.plan = parsed.data.plan;
   if (parsed.data.monthlyBudgetPoints !== undefined) data.monthlyBudgetPoints = parsed.data.monthlyBudgetPoints;
+  const found = await prisma.workspace.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
+  if (!found) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const ws = await prisma.workspace.update({ where: { id }, data });
   return NextResponse.json({ ok: true, workspace: ws });
 }
@@ -27,6 +29,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   await requirePlatformAdmin();
   const { id } = await ctx.params;
-  await prisma.workspace.delete({ where: { id } });
+  // Soft delete (reversible): never cascade-wipe a company's data.
+  await prisma.workspace.updateMany({ where: { id, deletedAt: null }, data: { deletedAt: new Date() } });
   return NextResponse.json({ ok: true });
 }

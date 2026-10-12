@@ -19,6 +19,7 @@ export async function runAutoKudos(now: Date = new Date()) {
 
   const workspaces = await prisma.workspace.findMany({
     where: {
+      deletedAt: null,
       OR: [{ autoBirthdayEnabled: true }, { autoAnniversaryEnabled: true }],
     },
     include: {

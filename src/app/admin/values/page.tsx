@@ -9,8 +9,8 @@ export default async function ValuesPage() {
   if (!user.workspaceId) return null;
 
   const [values, badges] = await Promise.all([
-    prisma.companyValue.findMany({ where: { workspaceId: user.workspaceId }, orderBy: { name: "asc" } }),
-    prisma.badge.findMany({ where: { workspaceId: user.workspaceId }, orderBy: { name: "asc" } }),
+    prisma.companyValue.findMany({ where: { workspaceId: user.workspaceId, deletedAt: null }, orderBy: { name: "asc" } }),
+    prisma.badge.findMany({ where: { workspaceId: user.workspaceId, deletedAt: null }, orderBy: { name: "asc" } }),
   ]);
 
   return (

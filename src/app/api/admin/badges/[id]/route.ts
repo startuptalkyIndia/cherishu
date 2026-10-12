@@ -6,6 +6,6 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   const admin = await requireRole(["HR_ADMIN", "SUPER_ADMIN"]);
   if (!admin.workspaceId) return NextResponse.json({ error: "No workspace" }, { status: 400 });
   const { id } = await ctx.params;
-  await prisma.badge.deleteMany({ where: { id, workspaceId: admin.workspaceId } });
+  await prisma.badge.updateMany({ where: { id, workspaceId: admin.workspaceId, deletedAt: null }, data: { deletedAt: new Date() } });
   return NextResponse.json({ ok: true });
 }

@@ -12,7 +12,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
   const merchant = await prisma.merchant.findUnique({
     where: { id },
     include: {
-      rewards: { orderBy: { createdAt: "desc" }, take: 50 },
+      rewards: { where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 50 },
       redemptions: {
         orderBy: { createdAt: "desc" },
         take: 50,

@@ -27,7 +27,7 @@ export default async function MerchantsPage({ searchParams }: { searchParams: Pr
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize, take: pageSize,
-      include: { _count: { select: { rewards: true, redemptions: true } } },
+      include: { _count: { select: { rewards: { where: { deletedAt: null } }, redemptions: true } } },
     }),
     prisma.merchant.count({ where }),
   ]);

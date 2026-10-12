@@ -15,6 +15,15 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid" }, { status: 400 });
   try {
+    // A soft-deleted badge keeps its unique (workspaceId, name) slot: restore it instead of failing.
+    const trashed = await prisma.badge.findFirst({ where: { workspaceId: admin.workspaceId, name: parsed.data.name, deletedAt: { not: null } } });
+    if (trashed) {
+      const badge = await prisma.badge.update({
+        where: { id: trashed.id },
+        data: { deletedAt: null, emoji: parsed.data.emoji || "🏆", color: parsed.data.color },
+      });
+      return NextResponse.json({ ok: true, badge });
+    }
     const badge = await prisma.badge.create({
       data: {
         workspaceId: admin.workspaceId,

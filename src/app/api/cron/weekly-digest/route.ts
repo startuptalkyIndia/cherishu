@@ -21,7 +21,7 @@ async function handle(req: Request) {
   const since = new Date(now); since.setDate(since.getDate() - 7); since.setUTCHours(0, 0, 0, 0);
   const period = `${since.toLocaleDateString("en-GB", { month: "short", day: "numeric" })} – ${now.toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`;
 
-  const workspaces = await prisma.workspace.findMany({ where: { emailWeeklyDigest: true } });
+  const workspaces = await prisma.workspace.findMany({ where: { emailWeeklyDigest: true, deletedAt: null } });
   let sent = 0;
 
   for (const ws of workspaces) {
@@ -49,7 +49,7 @@ async function handle(req: Request) {
     const receiverIds = topReceivers.map((r) => r.receiverId);
     const users = await prisma.user.findMany({ where: { id: { in: receiverIds } }, select: { id: true, name: true } });
     const userMap = new Map(users.map((u) => [u.id, u.name]));
-    const topValueName = topValue[0]?.valueId ? (await prisma.companyValue.findUnique({ where: { id: topValue[0].valueId } }))?.name : undefined;
+    const topValueName = topValue[0]?.valueId ? (await prisma.companyValue.findFirst({ where: { id: topValue[0].valueId, deletedAt: null } }))?.name : undefined;
 
     const hrAdmins = await prisma.user.findMany({
       where: { workspaceId: ws.id, role: "HR_ADMIN", isActive: true },

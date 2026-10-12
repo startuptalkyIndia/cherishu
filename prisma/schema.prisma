@@ -45,6 +45,7 @@ model Workspace {
   chatOnNominationAwarded Boolean @default(true)
   onboardingDismissed     Boolean @default(false) // "Get Started" checklist dismissed
   createdAt   DateTime @default(now())
+  deletedAt   DateTime?
   updatedAt   DateTime @updatedAt
 
   users        User[]
@@ -174,6 +175,7 @@ model Badge {
   emoji       String   @default("🏆")
   color       String   @default("indigo")
   createdAt   DateTime @default(now())
+  deletedAt   DateTime?
 
   recognitions Recognition[]
 
@@ -192,6 +194,7 @@ model CompanyValue {
   description String?
   emoji       String   @default("⭐")
   createdAt   DateTime @default(now())
+  deletedAt   DateTime?
 
   recognitions Recognition[]
 
@@ -300,6 +303,7 @@ model Reward {
   featured    Boolean  @default(false)
 
   createdAt   DateTime @default(now())
+  deletedAt   DateTime?
   updatedAt   DateTime @updatedAt
 
   redemptions Redemption[]

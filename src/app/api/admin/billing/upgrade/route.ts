@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
   // Real Razorpay flow
   try {
-    const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId } });
+    const workspace = await prisma.workspace.findUnique({ where: { id: admin.workspaceId, deletedAt: null } });
     const existing = await prisma.subscription.findUnique({ where: { workspaceId: admin.workspaceId } });
 
     let customerId = existing?.razorpayCustomerId;

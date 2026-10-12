@@ -1,5 +1,10 @@
 # Cherishu — Master Hub Comms
 
+## 2026-10-12 IST - feat: global-error.tsx (stale-tab Server Action handler)
+- **What:** `src/app/global-error.tsx`: reloads once (sessionStorage-guarded) when a tab left open across a deploy hits "Failed to find Server Action"; otherwise shows a plain 'try again' page with inline styles (global CSS is not loaded in this boundary).
+- **Why:** fleet lint NO_GLOBAL_ERROR (19 projects had this noise; B.29).
+- **Verify:** template type-checked with tsc in another project; behaviour proven in the projects that already ship it. Not deployed (rides the next deploy).
+
 ## 2026-10-12 IST - chore: remove stale credentials from CREDENTIALS.md, drop the shadowed robots.ts
 - **What:** CREDENTIALS.md listed the standard seed passwords as if live; production has no default passwords (seed needs SEED_* env, prod creates only the PlatformAdmin). Rewritten to say so. `src/app/robots.ts` was shadowed by `public/robots.txt` (static file wins) and would have added a sitemap line against the indexing policy; removed so there is one source of truth.
 - **Found by:** `fleet-checks.sh` (TRACKED_SECRET_FILE, ROBOTS_SHADOW). FALLBACK_SECRET in platform-auth.ts is a false positive (throws in production).

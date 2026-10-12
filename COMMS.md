@@ -4,7 +4,8 @@
 
 **What:** relaunch the employee recognition and rewards platform at cherishu.talkytools.com (it was deployed once in May, containers later gone, DNS and server folder still there). **Why:** founder wants it live in the SaaS group. **Done when:** container healthy, `/api/health` 200, `/sup-min` gated, super admin can log in with a generated password, no default passwords anywhere. **Out of scope:** payments, email provider, demo data, new features. **Verify:** curl routes, container Created time, log check.
 **Hardening done on branch `feat/prod-launch-hardening` (before any deploy):** `package-lock.json` synced (Playwright was in package.json but not the lock, so Docker `npm ci` would have failed); compose no longer falls back to a default DB password (`${POSTGRES_PASSWORD:?}`), app port bound to 127.0.0.1 (was 0.0.0.0), restart `unless-stopped`; `prisma/seed.ts` takes passwords from `SEED_*` env and throws in production if missing, and in production seeds only the super admin unless `SEED_DEMO=1`. `tsc` 0 errors, `next build` ok.
-**Status:** not yet deployed (second review and server steps next).
+**Second review (agent): SHIP with minor fixes, applied:** `AUTH_SECRET` now required in compose; login rate-limit IP now X-Real-IP first (was the forgeable first X-Forwarded-For hop). Noted, not changed: old docs (CREDENTIALS.md, CHANGELOG.md, COMMS.md 2026-04) still list the former dev default passwords, never set those in production; do not use `SEED_DEMO=1` in production (summary prints passwords).
+**Status:** not yet deployed (server steps next).
 
 ---
 

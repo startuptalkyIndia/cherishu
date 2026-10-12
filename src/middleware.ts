@@ -22,10 +22,11 @@ function middlewareRateLimit(key: string, limit: number, windowMs: number): bool
 }
 
 function getIp(req: NextRequest): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
+  // X-Real-IP is set by our nginx; the first X-Forwarded-For hop is client-controlled (LESSON-170).
   const realIp = req.headers.get("x-real-ip");
   if (realIp) return realIp.trim();
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",").pop()!.trim();
   return "unknown";
 }
 

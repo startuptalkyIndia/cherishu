@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://cherishu:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@db:5432/cherishu?schema=public
-      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set}
       AUTH_TRUST_HOST: 'true'
       NEXTAUTH_URL: https://cherishu.talkytools.com
       NODE_ENV: production

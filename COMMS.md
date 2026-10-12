@@ -4,7 +4,8 @@
 
 **What/why:** parity gap (every live product gets the feedback widget). **Change:** shared `FeedbackWidget` (hidden on /login, /signup, /sup-min), `POST /api/feedback` (hand-validated, 5/min per X-Real-IP with a swept map, 5 KB cap, 500 on DB failure), additive Prisma model `Feedback` (table `"Feedback"`, index `Feedback_createdAt_idx`), widget mounted in the root layout after CookieConsent. **Out of scope:** cron schedule, payments, email provider.
 **Verified locally:** `tsc` 0 errors, `next build` ok; built app: bad rating 400, 6 KB body 413, DB down 500, 6th post from one IP 429; widget on / /pricing /privacy, absent on /login and /sup-min.
-**Deploy needs (not done):** `pg_dump`, create `"Feedback"` + `Feedback_createdAt_idx` by hand BEFORE the new image runs (prod image has no db push), then `safe-deploy.sh cherishu 3045` (use the real folder, `Cherishu` on the server is a symlink).
+**DEPLOYED 2026-10-12 ~17:51 IST** as 313b750 (rollback ae75d3f) via `safe-deploy.sh cherishu 3045`, exit 0, after `pg_dump` (4.8 KB) to `/home/ubuntu/backups/cherishu/pre-feedback-20261012.sql.gz` and a hand-made `"Feedback"` table + index. **Evidence:** container Created 12:20:48 UTC healthy, restart policy `unless-stopped` on app and db, `/`, `/pricing`, `/login`, `/api/health`, `/sup-min` 200, widget on `/` and absent on `/login`, bad payload 400, one real POST saved (test row deleted, table back to 0), PlatformAdmin row still 1.
+**INCIDENT (my miss):** the 16:46 IST relaunch left `cherishu` in `ARCHIVED=(...)` of `/home/ubuntu/scripts/enforce-archived-stopped.sh`; its */30 cron stopped cherishu-app and cherishu-db at 17:00 IST and pinned restart=no. Site was 502 until ~17:46 IST (found while preparing this deploy; a clean stop, no data lost). Fixed: prefix removed from the list (backup `.bak-cherishu`), restart policy restored, containers started. Lesson added to `_shared/LEARNINGS.md`.
 
 ---
 

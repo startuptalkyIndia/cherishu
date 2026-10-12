@@ -477,3 +477,15 @@ model AuditLog {
   @@index([workspaceId, createdAt])
   @@index([action])
 }
+
+model Feedback {
+  id        String   @id @default(cuid())
+  rating    String
+  message   String   @default("")
+  path      String   @default("")
+  product   String   @default("")
+  userAgent String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

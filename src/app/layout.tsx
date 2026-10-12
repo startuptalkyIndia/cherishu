@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsent from "@/components/CookieConsent";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 
 const SITE_URL = "https://cherishu.talkytools.com";
 const TAGLINE = "Employee rewards & recognition that actually gets used";
@@ -118,6 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-50 text-gray-900 antialiased">
         {children}
         <CookieConsent />
+        <FeedbackWidget productName="Cherishu" />
       </body>
     </html>
   );

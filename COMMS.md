@@ -1,5 +1,13 @@
 # Cherishu — Master Hub Comms
 
+## 2026-10-12 IST — feat: feedback widget (benchmark parity item)
+
+**What/why:** parity gap (every live product gets the feedback widget). **Change:** shared `FeedbackWidget` (hidden on /login, /signup, /sup-min), `POST /api/feedback` (hand-validated, 5/min per X-Real-IP with a swept map, 5 KB cap, 500 on DB failure), additive Prisma model `Feedback` (table `"Feedback"`, index `Feedback_createdAt_idx`), widget mounted in the root layout after CookieConsent. **Out of scope:** cron schedule, payments, email provider.
+**Verified locally:** `tsc` 0 errors, `next build` ok; built app: bad rating 400, 6 KB body 413, DB down 500, 6th post from one IP 429; widget on / /pricing /privacy, absent on /login and /sup-min.
+**Deploy needs (not done):** `pg_dump`, create `"Feedback"` + `Feedback_createdAt_idx` by hand BEFORE the new image runs (prod image has no db push), then `safe-deploy.sh cherishu 3045` (use the real folder, `Cherishu` on the server is a symlink).
+
+---
+
 ## 2026-10-12 IST — Relaunch spec: bring Cherishu live (founder: "make it live in saas")
 
 **What:** relaunch the employee recognition and rewards platform at cherishu.talkytools.com (it was deployed once in May, containers later gone, DNS and server folder still there). **Why:** founder wants it live in the SaaS group. **Done when:** container healthy, `/api/health` 200, `/sup-min` gated, super admin can log in with a generated password, no default passwords anywhere. **Out of scope:** payments, email provider, demo data, new features. **Verify:** curl routes, container Created time, log check.

@@ -21,9 +21,10 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
   const status = sp.status || "";
   const q = (sp.q || "").trim();
 
-  const where: any = {};
+  const where: any = { workspace: { deletedAt: null } };
   if (status) where.status = status;
   if (q) where.workspace = {
+    deletedAt: null,
     OR: [
       { name: { contains: q, mode: "insensitive" } },
       { slug: { contains: q, mode: "insensitive" } },
@@ -41,9 +42,9 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
   ]);
 
   // Compute MRR (active subs only)
-  const activeSubs = await prisma.subscription.findMany({ where: { status: "ACTIVE" } });
+  const activeSubs = await prisma.subscription.findMany({ where: { status: "ACTIVE", workspace: { deletedAt: null } } });
   const mrr = activeSubs.reduce((sum, s) => sum + (s.pricePerSeatMonthly * s.seatsPurchased), 0);
-  const trialCount = await prisma.subscription.count({ where: { status: "TRIAL" } });
+  const trialCount = await prisma.subscription.count({ where: { status: "TRIAL", workspace: { deletedAt: null } } });
   const workspaceCount = await prisma.workspace.count({ where: { deletedAt: null } });
   const paidWorkspaces = await prisma.workspace.count({ where: { deletedAt: null, plan: { in: ["pro", "enterprise"] } } });
 

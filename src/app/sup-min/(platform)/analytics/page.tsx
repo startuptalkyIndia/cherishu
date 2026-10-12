@@ -31,7 +31,7 @@ export default async function AnalyticsPage() {
   // By workspace
   const byWs = await prisma.recognition.groupBy({
     by: ["workspaceId"],
-    where: { createdAt: { gte: since } },
+    where: { createdAt: { gte: since }, workspace: { deletedAt: null } },
     _count: true,
     orderBy: { _count: { workspaceId: "desc" } },
     take: 10,

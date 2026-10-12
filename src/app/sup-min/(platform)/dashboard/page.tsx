@@ -8,9 +8,9 @@ export default async function SupMinDashboard() {
   const [workspaces, userCount, recognitionCount, redemptionCount, pointsSum, recentWorkspaces, topWorkspaces] = await Promise.all([
     prisma.workspace.count({ where: { deletedAt: null } }),
     prisma.user.count({ where: { OR: [{ workspaceId: null }, { workspace: { deletedAt: null } }] } }),
-    prisma.recognition.count(),
-    prisma.redemption.count(),
-    prisma.recognition.aggregate({ _sum: { points: true } }),
+    prisma.recognition.count({ where: { workspace: { deletedAt: null } } }),
+    prisma.redemption.count({ where: { workspace: { deletedAt: null } } }),
+    prisma.recognition.aggregate({ where: { workspace: { deletedAt: null } }, _sum: { points: true } }),
     prisma.workspace.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 5, include: { _count: { select: { users: true } } } }),
     prisma.workspace.findMany({
       where: { deletedAt: null },

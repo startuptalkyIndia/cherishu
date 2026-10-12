@@ -1,5 +1,11 @@
 # Cherishu — Master Hub Comms
 
+## 2026-10-12 IST — fix: soft-delete review findings (billing/dashboard/analytics counts, restore route)
+- **Review (talkytools-code-review) on 2443e08: FIX.** Billing MRR/trial/list and dashboard/analytics counts still counted deleted workspaces; no way to undo a workspace delete.
+- **Done:** those queries now filter `workspace.deletedAt: null`; new `POST /api/sup-min/workspaces/[id]/restore` (platform admin) clears deletedAt. Emails of a deleted workspace's users stay reserved until restored (restore is the answer to 'email exists').
+- **Open decision (founder):** deleting a paying workspace does NOT cancel its Razorpay subscription; cancel it by hand before deleting.
+- **Verify:** tsc 0 errors. Deploy: run the 4 ALTER TABLE statements from the 2443e08 entry after a pg_dump, before the new image.
+
 ## 2026-10-12 IST — feat: soft delete for Workspace, Reward, Badge, CompanyValue
 
 **What:** the four dangerous hard deletes now set `deletedAt = now()` instead of removing rows. Super-admin workspace delete used to cascade-wipe a company's users, kudos, redemptions (irreversible); admin reward/badge/value deletes and the super-admin reward delete were hard deletes too. **Why:** DB_STANDARD / HOW_WE_BUILD (soft delete, additive only, make deletes reversible). **Done when:** nullable `deletedAt` on the 4 models, delete routes only stamp it, every read path filters `deletedAt: null`, a deleted workspace cannot log in or appear anywhere. **Out of scope:** a restore UI (restore = `UPDATE ... SET "deletedAt" = NULL`), other models, hard purge job, changes to unrelated behaviour. **Verify:** `tsc` 0, `next build` ok, `tests/soft-delete/e2e.sh` against throwaway Postgres + built app (27/27).

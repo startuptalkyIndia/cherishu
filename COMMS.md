@@ -1,5 +1,13 @@
 # Cherishu — Master Hub Comms
 
+## 2026-10-12 IST — Relaunch spec: bring Cherishu live (founder: "make it live in saas")
+
+**What:** relaunch the employee recognition and rewards platform at cherishu.talkytools.com (it was deployed once in May, containers later gone, DNS and server folder still there). **Why:** founder wants it live in the SaaS group. **Done when:** container healthy, `/api/health` 200, `/sup-min` gated, super admin can log in with a generated password, no default passwords anywhere. **Out of scope:** payments, email provider, demo data, new features. **Verify:** curl routes, container Created time, log check.
+**Hardening done on branch `feat/prod-launch-hardening` (before any deploy):** `package-lock.json` synced (Playwright was in package.json but not the lock, so Docker `npm ci` would have failed); compose no longer falls back to a default DB password (`${POSTGRES_PASSWORD:?}`), app port bound to 127.0.0.1 (was 0.0.0.0), restart `unless-stopped`; `prisma/seed.ts` takes passwords from `SEED_*` env and throws in production if missing, and in production seeds only the super admin unless `SEED_DEMO=1`. `tsc` 0 errors, `next build` ok.
+**Status:** not yet deployed (second review and server steps next).
+
+---
+
 ## [2026-04-26] Master Hub broadcast — TalkyTools platform standards
 
 Done: A, B, C, D, E.

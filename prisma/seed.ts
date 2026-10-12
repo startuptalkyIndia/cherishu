@@ -7,10 +7,9 @@
  *   - PlatformAdmin (super admin at /sup-min)
  *   - User with roles EMPLOYEE / MANAGER / HR_ADMIN / SUPER_ADMIN (workspace login)
  *
- * Standard cred mapping for Cherishu:
- *   - Super Admin → PlatformAdmin: superadmin@cherishu.com / Shu_bham12!
- *   - Admin       → User HR_ADMIN: admin@cherishu.com / Admin@2026!
- *   - Demo User   → User EMPLOYEE: user@cherishu.com / User@2026!
+ * Credential mapping: Super Admin = PlatformAdmin (SEED_SUPERADMIN_PASSWORD), Admin = User HR_ADMIN
+ *   (SEED_ADMIN_PASSWORD), Demo = User EMPLOYEE (SEED_DEMO_PASSWORD). No default passwords exist;
+ *   outside production a missing one is generated randomly and printed once.
  *
  * Seed is idempotent (uses upsert) and creates a demo workspace "Acme Inc."
  * with sample colleagues, recognitions, and rewards so the demo experience
@@ -19,27 +18,41 @@
 
 import { PrismaClient, RewardType, RewardProvider } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
 
 const PROJECT_DOMAIN = "cherishu.com";
 
+// Fail closed: there are NO default passwords. Production requires every seeded password
+// from the environment. Outside production a missing one is generated randomly and printed once.
+function pw(envName: string, _unused?: string): string {
+  const v = process.env[envName];
+  if (v) return v;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`${envName} must be set to seed in production (no default passwords)`);
+  }
+  const generated = randomBytes(12).toString("base64url");
+  console.log(`(dev) ${envName} not set; generated: ${generated}`);
+  return generated;
+}
+
 const SUPER_ADMIN = {
   email: `superadmin@${PROJECT_DOMAIN}`,
   name: "Super Admin",
-  password: "Shu_bham12!",
+  password: pw("SEED_SUPERADMIN_PASSWORD"),
 };
 
 const ADMIN = {
   email: `admin@${PROJECT_DOMAIN}`,
   name: "Admin",
-  password: "Admin@2026!",
+  get password() { return pw("SEED_ADMIN_PASSWORD"); },
 };
 
 const DEMO_USER = {
   email: `user@${PROJECT_DOMAIN}`,
   name: "Demo User",
-  password: "User@2026!",
+  get password() { return pw("SEED_DEMO_PASSWORD"); },
 };
 
 async function main() {
@@ -53,6 +66,12 @@ async function main() {
     create: { email: SUPER_ADMIN.email, name: SUPER_ADMIN.name, passwordHash: superHash },
   });
   console.log(`✓ Super admin: ${SUPER_ADMIN.email}`);
+
+  // Production: only the platform super admin unless demo data is asked for explicitly.
+  if (process.env.NODE_ENV === "production" && process.env.SEED_DEMO !== "1") {
+    console.log("✓ Production: skipping demo workspace and demo users (set SEED_DEMO=1 to include)");
+    return;
+  }
 
   // 2) Demo workspace (idempotent)
   const existingWs = await prisma.workspace.findUnique({ where: { slug: "acme" } });
